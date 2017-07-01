@@ -23,8 +23,14 @@ try {
         $MadelineProto = new \danog\MadelineProto\API($settings);
         $authorization = $MadelineProto->bot_login($token);
         \danog\MadelineProto\Logger::log([$authorization], \danog\MadelineProto\Logger::NOTICE);
-        $Lua = new \danog\MadelineProto\Lua('bot.lua', $MadelineProto);
+        $Lua = new \danog\MadelineProto\Lua('start.lua', $MadelineProto);
     }
+
+$Lua->MadelineProto->lua = true;
+foreach ($Lua->MadelineProto->get_methods_namespaced() as $method => $namespace) {
+    $Lua->MadelineProto->{$namespace}->lua = true;
+}
+
 $offset = 0;
 while (true) {
     $updates = $Lua->MadelineProto->API->get_updates(['offset' => $offset, 'limit' => 50, 'timeout' => 0]); // Just like in the bot API, you can specify an offset, a limit and a timeout
