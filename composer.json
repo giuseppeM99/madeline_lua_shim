@@ -1,0 +1,12 @@
+{
+    "require": {
+        "danog/madelineproto": "dev-master"
+    },
+    "minimum-stability": "dev",
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/danog/phpseclib"
+        }
+    ]
+}
