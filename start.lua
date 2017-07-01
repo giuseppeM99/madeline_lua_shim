@@ -19,8 +19,8 @@ started = false
 
 function loadBot()
   print("Loading the bot...")
-  require("shim")
-  require("bot.bot")
+  loadfile("shim.lua")()
+  loadfile("bot/bot.lua")()
   print("Bot loaded!")
   started = true
 end

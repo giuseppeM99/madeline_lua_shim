@@ -54,6 +54,7 @@ function packInfo(info, pack)
     pack.peer_type = "user"
     pack.peer_id = info.user_id
     pack.id = "placeholder"
+    pack.phone = info.User.phone
     pack.first_name = info.User.first_name
     pack.last_name = info.User.last_name or nil
     pack.print_name = pack.last_name and (pack.first_name .. "_".. pack.last_name):gsub("%s", "_") or pack.first_name:gsub("%s", "_")
