@@ -12,10 +12,10 @@ If not, see <http://www.gnu.org/licenses/>.
 */
 //See https://github.com/danog/MadelineProto/blob/master/lua/madeline.php
 require 'vendor/autoload.php';
-$settings = ['app_info' => ['api_id' => 6, 'api_hash' => 'eb06d4abfb49dc3eeb1aeb98ae0f581e']];
+$settings = ['app_info' => ['api_id' => 6, 'api_hash' => 'eb06d4abfb49dc3eeb1aeb98ae0f581e'], 'logger' => ['loglevel' => \danog\MadelineProto\Logger::ERROR]];
 $Lua = false;
 try {
-    $Lua = \danog\MadelineProto\Serialization::deserialize('bot.madeline');
+    $Lua = new \danog\MadelineProto\Lua('start.lua', \danog\MadelineProto\Serialization::deserialize('bot.madeline'));
 } catch (\danog\MadelineProto\Exception $e) {
 }
     if (file_exists('token.php') && !is_object($Lua)) {
@@ -39,5 +39,5 @@ while (true) {
         $Lua->madeline_update_callback($update['update']);
         echo PHP_EOL;
     }
-    \danog\MadelineProto\Serialization::serialize('bot.madeline', $Lua);
+    \danog\MadelineProto\Serialization::serialize('bot.madeline', $Lua->MadelineProto);
 }
