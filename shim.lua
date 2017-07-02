@@ -98,7 +98,7 @@ end
 
 
 function madeline_update_callback(data)
-  require "methods"
+  loadfile("methods.lua")()
   data = fixfp(data)
   print("Got update", data._)
   if data._ == "updateChannel" then
