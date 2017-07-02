@@ -39,16 +39,18 @@ function packInfo(info, pack)
     pack.username = info.Chat.username
     pack.access_hash = info.Chat.access_hash
     pack.bot_api_id = info.bot_api_id
+    pack.participants_count = info.Chat.participants_count
     pack.raw = info.Chat
   elseif info.type == "chat" then
     pack.peer_type = "chat"
-    pack.peer_id = info.channel_id
+    pack.peer_id = info.chat_id
     pack.id = "placeholder"
     pack.title = info.Chat.title
     pack.print_name = pack.title:gsub("%s", "_")
     pack.flags = 1
     pack.access_hash = info.Chat.access_hash
     pack.bot_api_id = info.bot_api_id
+    pack.members_count = info.Chat.participants_count
     pack.raw = info.Chat
   elseif info.type == "user" or info.type == "bot" then
     pack.peer_type = "user"
