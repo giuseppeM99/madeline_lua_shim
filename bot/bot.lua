@@ -40,6 +40,7 @@ function send_large_msg_callback(cb_extra, success, result)
 end
 
 function ok_cb(extra, success, result)
+  vardump(result)
 end
 
 local myid = 68972553 --put here your id to test
@@ -74,7 +75,7 @@ function on_msg_receive(msg)
       chat_info("chat#id" .. msg.to.peer_id, function(extra, success, result) send_large_msg_callback({destination = msg.from.peer_id, text = serpent.block(result, {comment = false})}) end, {})
     end
     if msg.text:match("test") then
-      send_document("user#id" .. msg.from.peer_id, "launch.sh", ok_cb, nil)
+      --send_document("user#id" .. msg.from.peer_id, "launch.sh", ok_cb, nil)
     end
   end
 end

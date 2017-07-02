@@ -5,7 +5,7 @@ function (..., callback, extra)
     if res == {} then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, true)
+    return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
 end
@@ -48,12 +48,12 @@ function channel_info(input, callback, extra)
 end
 
 function send_msg(peer, text, callback, extra)
-  local res = messages.sendMessage({peer = peer, message = text})
+  local res = fixfp(messages.sendMessage({peer = peer, message = text}))
   if res then
-    if res == {} then
-      return false, callback(extra, false, false)
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, true)
+    return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
 end
@@ -62,48 +62,49 @@ end
 function send_document(peer, file_path, callback, extra)
   local inputFile = upload(file_path)
   vardump(inputFile)
-  local res = messages.sendMedia({peer = peer, media = inputFile})
+  local res = fixfp(messages.sendMedia({peer = peer, media = inputFile}))
   vardump(res)
   if res then
     if res == {} or res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, true)
+    return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
 end
 
+--Errors errors always errors
 function chat_del_user(chat, user, callback, extra)
-  local res = messages.deleteChatUser({chat_id = chat, user_id = user})
+  local res = fixfp(messages.deleteChatUser({chat_id = chat, user_id = user}))
   if res or res.error then
     if res == {} then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, true)
+    return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
 end
 
 function channel_kick(channel, user, callback, extra)
+  local channelBannedRights={_='channelBannedRights', view_messages=true, send_messages=true, send_media=true, send_stickers=true, send_gifs=true, send_games=true, send_inline=true, embed_links=true, until_date=0}
+  local res = fixfp(channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights}))
+  if res or res.error then
+    if res == {} then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function channel_unblock(channel, user, callback, extra)
   local channelBannedRights={_='channelBannedRights', view_messages=false, send_messages=false, send_media=false, send_stickers=false, send_gifs=false, send_games=false, send_inline=false, embed_links=false, until_date=0}
   local res = channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights})
   if res or res.error then
     if res == {} then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, true)
-  end
-  return false, callback(extra, false, false)
-end
-
-function channel_unblock(channel, user, callback, extra)
-  local channelBannedRights={_='channelBannedRights', view_messages=true, send_messages=true, send_media=true, send_stickers=true, send_gifs=true, send_games=true, send_inline=true, embed_links=true, until_date=0}
-  local res = channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights})
-  if res or res.error then
-    if res == {} then
-      return false, callback(extra, false, res)
-    end
-    return true, callback(extra, true, true)
+    return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
 end
