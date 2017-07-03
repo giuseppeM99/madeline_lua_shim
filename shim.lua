@@ -69,6 +69,44 @@ function packInfo(info, pack)
   return pack
 end
 
+function parsePwrUser(user)
+  if user.type == "bot" then
+    user.bot = true
+    user.type = "user"
+  else
+    user.bot = false
+  end
+  user.peer_id = user.id
+  user.peer_type = user.type
+  user.print_name = user.last_name and (user.first_name .. "_".. user.last_name):gsub("%s", "_") or user.first_name:gsub("%s", "_")
+end
+
+function packMembers(memberlist, users, filter)
+  if not filter then
+    filer = 1
+  end
+  if memberlist.error then
+    return false
+  end
+  print(filter)
+  for _, v in pairs(memberlist.participants) do
+    parsePwrUser(v.user)
+    v.user.role = v.role
+    if filter == 2 then
+      if not v.role or v.role ~= "user" then --The method get_pwr_chat returns no role if the user is admin ATM
+        table.insert(users, v.user)
+      end
+    elseif filter == 3 then
+      if v.user.bot then
+        table.insert(users, v.user)
+      end
+    else
+      table.insert(users, v.user)
+    end
+  end
+  return users
+end
+
 -- Create the tg-cli style msg object
 function tgmsg(data)
   msg = {}
@@ -95,9 +133,29 @@ function tgmsg(data)
   return msg
 end
 
+function postpone(callback, extra, time)
+  table.insert(crons, {time = os.time()+time, callback = callback, extra = extra})
+end
+
+function doCrons()
+  print("doCrons")
+  local ts = os.time()
+  for k, v in ipairs(crons) do
+    if v.time <= ts then
+      print("Done cron", k)
+      v.callback(v.extra)
+      table.remove(crons, k)
+    end
+  end
+  lastCron = ts
+end
 
 
 function madeline_update_callback(data)
+  if not started then
+    on_binlog_replay_end()
+    on_our_id(fixfp(get_self().id))
+  end
   loadfile("methods.lua")()
   data = fixfp(data)
   print("Got update", data._)
@@ -109,5 +167,9 @@ function madeline_update_callback(data)
     if msg then
       on_msg_receive(msg)
     end
+  end
+
+  if os.time() > lastCron+60 then
+    doCrons()
   end
 end

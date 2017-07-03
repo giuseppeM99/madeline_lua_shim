@@ -15,15 +15,20 @@ function print(...) --just to put a \n at the end :D
   io.write("\n")
 end
 
-started = false
-
 function loadBot()
+  started = false
+  crons = {}
+  lastCron = os.time()
   print("Loading the bot...")
   loadfile("shim.lua")()
   loadfile("bot/bot.lua")()
   print("Bot loaded!")
-  started = true
 end
+
+--Loading initial values
+started = false
+crons = {}
+lastCron = os.time()
 
 if not started then
   print("Starting...")
