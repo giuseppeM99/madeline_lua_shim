@@ -1,4 +1,5 @@
 <?php
+require "vendor/autoload.php";
 $settings = ['app_info' => ['api_id' => 6, 'api_hash' => 'eb06d4abfb49dc3eeb1aeb98ae0f581e'], 'logger' => ['loglevel' => \danog\MadelineProto\Logger::ERROR]];
 $madeline = new \danog\MadelineProto\API($settings);
 $madeline->phone_login(readline('Enter your phone number: '));
