@@ -81,6 +81,22 @@ function channel_get_admins(input, callback, extra)
   return success, callback(extra, success, result)
 end
 
+function delete_msg(message, callback, extra)
+  local res = {}
+  if message.inputPeer._ == "peerChannel" then
+    res = fixfp(channels.deleteMessages({channel = message.inputPeer, id = {message.message_id}}))
+  else
+    res = fixfp(messages.deleteMessages({revoke = true, id = {message.message_id}})) -- so this method does not exist? https://daniil.it/MadelineProto/API_docs/methods/messages_deleteMessages.html
+  end
+  if res or res.error then
+    if res == {} then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
 function send_msg(peer, text, callback, extra)
   local res = fixfp(messages.sendMessage({peer = peer, message = text}))
   if res then

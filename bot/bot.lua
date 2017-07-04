@@ -86,7 +86,7 @@ function on_msg_receive(msg)
       chat_info("chat#id" .. msg.to.peer_id, function(extra, success, result) send_large_msg_callback({destination = msg.to.raw, text = serpent.block(result, {comment = false})}) end, {})
     end
     if msg.text:match("^test$") then
-      send_document(msg.from.peer_id, "pi", ok_cb, nil)
+      delete_msg(msg.id, ok_cb, nil)
     end
   end
 
