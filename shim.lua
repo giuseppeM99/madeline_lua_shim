@@ -5,6 +5,27 @@ function vardump(...)
   print(serpent.block({...}, {comment=false}))
 end
 
+--https://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value#641993
+function deepcopy(o, seen)
+  seen = seen or {}
+  if o == nil then return nil end
+  if seen[o] then return seen[o] end
+
+  local no
+  if type(o) == 'table' then
+    no = {}
+    seen[o] = no
+
+    for k, v in next, o, nil do
+      no[deepcopy(k, seen)] = deepcopy(v, seen)
+    end
+    setmetatable(no, deepcopy(getmetatable(o), seen))
+  else -- number, string, boolean, etc
+    no = o
+  end
+  return no
+end
+
 -- in Lua 5.3 numbers are passed as double, even if they are integers (using lua_pushnumber form the Lua C API)
 function fixfp(data)
  if tonumber(_VERSION:match("%d+%.%d+")) < 5.3 then
@@ -77,17 +98,35 @@ function packService(info, pack)
   if info._ == "messageActionChatAddUser" then
     pack.type = "chat_add_user"
     pack.users = {}
-    local first = true
     for _, v in pairs(info.users) do
       table.insert(pack.users, packInfo(fixfp(get_info(v)), {}))
     end
-    pack.user = packInfo(fixfp(get_info(pack.users[1].raw)), {})
+    pack.user = deepcopy(pack.users[1])
   elseif info._ == "messageActionChatDeleteUser" then
     pack.type = "chat_del_user"
     pack.user = packInfo(fixfp(get_info(info.user_id)), {})
   elseif info._ == "messageActionChatJoinedByLink" then
     pack.type = "chat_add_user_link"
     pack.link_issuer = packInfo(fixfp(get_info(info.inviter_id)), {})
+  elseif info._ == "messageActionChatDeletePhoto" then
+    pack.type = "chat_delete_photo"
+  elseif info._ == "messageActionChatEditPhoto" then
+    pack.type = "chat_edit_photo"
+  elseif info._ == "messageActionChatCreate" then
+    pack.type = "chat_created"
+    pack.title = info.title
+  elseif info._ == "messageActionChannelCreate" then
+    pack.type = "channel_create"
+    pack.title = info.title
+  elseif info._ == "messageActionChatMigrateTo" then
+    pack.type = "migrated_to"
+    pack.channel_id = info.channel_id
+  elseif info._ == "messageActionChannelMigrateFrom" then
+    pack.type = "migrate_from"
+    pack.title = info.title
+    pack.chat_id = info.chat_id
+  elseif info._ == "messageActionPinMessage" then
+    pack.type = "pin_message"
   end
 
   return pack
@@ -155,6 +194,11 @@ function tgmsg(data)
     msg.service = true
     msg.action = packService(data.message.action, {})
   end
+  if data.message.reply_to_msg_id then
+    msg.reply_id = {}
+    msg.reply_id.inputPeer = deepcopy(data.message.to_id)
+    msg.reply_id.id = data.message.reply_to_msg_id
+  end
   msg.date = data.message.date
   msg.flags = 1
   return msg
@@ -165,11 +209,9 @@ function postpone(callback, extra, time)
 end
 
 function doCrons()
-  print("doCrons")
   local ts = os.time()
   for k, v in ipairs(crons) do
     if v.time <= ts then
-      print("Done cron", k)
       v.callback(v.extra)
       table.remove(crons, k)
     end
