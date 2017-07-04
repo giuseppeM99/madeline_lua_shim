@@ -60,6 +60,10 @@ function on_msg_receive(msg)
   if not started then
     return
   end
+  if msg.service then
+    vardump(msg.action)
+    return
+  end
   if msg.from.peer_id == myid then
     if msg.text:match("^!reload$") then
       return loadBot()

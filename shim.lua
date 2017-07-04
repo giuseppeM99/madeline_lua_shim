@@ -28,6 +28,9 @@ end
 
 -- Pack infos from the madeline function get_info in a tg-cli like object
 function packInfo(info, pack)
+  if not pack then
+    pack = {}
+  end
   if info.type == "channel" or info.type == "supergroup" then
     pack.peer_type = "channel"
     pack.peer_id = info.channel_id
@@ -69,6 +72,27 @@ function packInfo(info, pack)
   return pack
 end
 
+function packService(info, pack)
+  print("Handling service message", info._)
+  if info._ == "messageActionChatAddUser" then
+    pack.type = "chat_add_user"
+    pack.users = {}
+    local first = true
+    for _, v in pairs(info.users) do
+      table.insert(pack.users, packInfo(fixfp(get_info(v)), {}))
+    end
+    pack.user = packInfo(fixfp(get_info(pack.users[1].raw)), {})
+  elseif info._ == "messageActionChatDeleteUser" then
+    pack.type = "chat_del_user"
+    pack.user = packInfo(fixfp(get_info(info.user_id)), {})
+  elseif info._ = "messageActionChatJoinedByLink" then
+    pack.type = "chat_add_user_link"
+    pack.link_issuer = packInfo(fixfp(get_info(info.inviter_id)), {})
+  end
+
+  return pack
+end
+
 function parsePwrUser(user)
   if user.type == "bot" then
     user.bot = true
@@ -88,7 +112,6 @@ function packMembers(memberlist, users, filter)
   if memberlist.error then
     return false
   end
-  print(filter)
   for _, v in pairs(memberlist.participants) do
     parsePwrUser(v.user)
     v.user.role = v.role
@@ -128,6 +151,10 @@ function tgmsg(data)
   msg.message_id = data.message.id
   msg.id = {inputPeer = data.message.to_id, message_id = data.message.id}
   msg.service = false
+  if data.message.action then
+    msg.service = true
+    msg.action = packService(data.message.action, {})
+  end
   msg.date = data.message.date
   msg.flags = 1
   return msg
