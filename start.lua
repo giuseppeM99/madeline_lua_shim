@@ -29,7 +29,10 @@ end
 started = false
 crons = {}
 lastCron = os.time()
-
+if os.execute("mediainfo -h") then
+  useMediaInfo = true
+  mediainfo = loadfile("mediainfo.lua")()
+end
 if not started then
   print("Starting...")
   loadBot()

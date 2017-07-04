@@ -92,12 +92,81 @@ function send_msg(peer, text, callback, extra)
   return false, callback(extra, false, false)
 end
 
---doesn't works, madeline returns an error
+local function getMimeType(file_path)
+  if useMediaInfo then
+    local info = mediainfo(file_path)
+    if info:getMimeType() then
+      return info:getMimeType()
+    end
+  end
+  local name = file_path:match("/?([%w_%.%-]+)$")
+  return mimetype.get_content_type(name:match("%.(%w+)$"))
+end
+
 function send_document(peer, file_path, callback, extra)
   local inputFile = upload(file_path)
   local filename = file_path:match("/?([%w_%.%-]+)$")
   local documentAttribute = {{_="documentAttributeFilename", file_name=filename}}
-  local inputMedia = {_ = "inputMediaUploadedDocument", file = inputFile, attributes = documentAttribute, caption = "", mime_type = mimetype.get_content_type(filename:match("%.(%w+)$"))}
+  local mime_type = getMimeType(file_path)
+  if useMediaInfo then
+    if mime_type:match("video") then
+      local info = mediainfo(file_path)
+      local va = {_="documentAttributeVideo"}
+      if info:getWidth() then
+        va.w = info:getWidth()
+      end
+      if info:getHeight() then
+        va.h = info:getHeight()
+      end
+      if info:getDuration() then
+        va.duration = info:getDuration()
+      end
+    elseif mime_type:match("image") then
+      local info = mediainfo(file_path)
+      local va = {_="documentAttributeImageSize"}
+      if info:getWidth() then
+        va.w = info:getWidth()
+      end
+      if info:getHeight() then
+        va.h = info:getHeight()
+      end
+    elseif mime_type:match("audio") then
+      local info = mediainfo(file_path)
+      local va = {_="documentAttributeAudio"}
+      if info:getDuration() then
+        va.duration = info:getDuration()
+      end
+      if info:getPerformer() then
+        va.performer = info:getPerformer()
+      end
+      if info:getTitle() then
+        va.title = info:getTitle()
+      end
+    end
+    table.insert(documentAttribute, va)
+  end
+  local inputMedia = {_ = "inputMediaUploadedDocument", file = inputFile, attributes = documentAttribute, caption = "", mime_type = mime_type}
+  local res = fixfp(messages.sendMedia({peer = peer, media = inputMedia}))
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function send_video(peer, file_path, callback, extra)
+  local inputFile = upload(file_path)
+  local filename = file_path:match("/?([%w_%.%-]+)$")
+  local documentAttribute = {{_="documentAttributeFilename", file_name=filename},{_="documentAttributeVideo", w=0, h=0, duration=0}}
+  if useMediaInfo then
+    local info = mediainfo(file_path)
+    documentAttribute[2].w = info:getWidth()
+    documentAttribute[2].h = info:getHeight()
+    documentAttribute[2].duration = info:getDuration()
+  end
+  local inputMedia = {_ = "inputMediaUploadedDocument", file = inputFile, attributes = documentAttribute, caption = "", mime_type = getMimeType(file_path)}
   local res = fixfp(messages.sendMedia({peer = peer, media = inputMedia}))
   if res then
     if res == {} or res.error then
