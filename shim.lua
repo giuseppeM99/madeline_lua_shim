@@ -85,7 +85,7 @@ function packService(info, pack)
   elseif info._ == "messageActionChatDeleteUser" then
     pack.type = "chat_del_user"
     pack.user = packInfo(fixfp(get_info(info.user_id)), {})
-  elseif info._ = "messageActionChatJoinedByLink" then
+  elseif info._ == "messageActionChatJoinedByLink" then
     pack.type = "chat_add_user_link"
     pack.link_issuer = packInfo(fixfp(get_info(info.inviter_id)), {})
   end
