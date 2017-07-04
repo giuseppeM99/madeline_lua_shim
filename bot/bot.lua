@@ -40,7 +40,7 @@ function send_large_msg_callback(cb_extra, success, result)
 end
 
 function ok_cb(extra, success, result)
-  --vardump(result)
+  vardump(result)
 end
 
 function cron_func()
@@ -86,7 +86,9 @@ function on_msg_receive(msg)
       chat_info("chat#id" .. msg.to.peer_id, function(extra, success, result) send_large_msg_callback({destination = msg.to.raw, text = serpent.block(result, {comment = false})}) end, {})
     end
     if msg.text:match("^test$") then
-      delete_msg(msg.id, ok_cb, nil)
+      fwd_media(msg.reply_id, myid, ok_cb, nil) --doesn't works
+      --fwd_msg(msg.reply_id, myid, ok_cb, nil)
+      --delete_msg(msg.id, ok_cb, nil)
     end
   end
 

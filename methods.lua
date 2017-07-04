@@ -1,8 +1,8 @@
 --[[ //Base function
 function (..., callback, extra)
   local res = madeline.method(...)
-  if res or res.error then
-    if res == {} then
+  if res then
+    if res == {} or res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -55,6 +55,9 @@ end
 local function _channel_get_users(channel, filter)
 
   local res = fixfp(get_pwr_chat(channel))
+  if not res or res == {} or res.error then
+    return false, res
+  end
   if res.type ~= "channel" and res.type ~= "supergroup" then
     return false, false
   end
@@ -88,8 +91,8 @@ function delete_msg(message, callback, extra)
   else
     res = fixfp(messages.deleteMessages({revoke = true, id = {message.message_id}})) -- so this method does not exist? https://daniil.it/MadelineProto/API_docs/methods/messages_deleteMessages.html
   end
-  if res or res.error then
-    if res == {} then
+  if res then
+    if res == {}  or res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -208,12 +211,9 @@ end
 
 --Errors errors always errors
 function chat_del_user(chat, user, callback, extra)
-  chat = tonumber(chat:match("(%d+)$"))
-  user = tonumber(user:match("(%d+)$"))
-  local inputPeer = {_="inputPeerChat", chat_id = chat}
-  local res = fixfp(messages.deleteChatUser({chat_id = inputPeer, user_id = user}))
-  if res or res.error then
-    if res == {} then
+  local res = fixfp(messages.deleteChatUser({chat_id = chat, user_id = user}))
+  if res then
+    if res == {} or res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -224,8 +224,8 @@ end
 function channel_kick(channel, user, callback, extra)
   local channelBannedRights={_='channelBannedRights', view_messages=true, send_messages=true, send_media=true, send_stickers=true, send_gifs=true, send_games=true, send_inline=true, embed_links=true, until_date=0}
   local res = fixfp(channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights}))
-  if res or res.error then
-    if res == {} then
+  if res then
+    if res == {} or res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -236,8 +236,75 @@ end
 function channel_unblock(channel, user, callback, extra)
   local channelBannedRights={_='channelBannedRights', view_messages=false, send_messages=false, send_media=false, send_stickers=false, send_gifs=false, send_games=false, send_inline=false, embed_links=false, until_date=0}
   local res = channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights})
-  if res or res.error then
-    if res == {} then
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function get_message(message, callback, extra)
+  local res = {}
+  if message.inputPeer._ == "peerChannel" then
+    res = fixfp(channels.getMessages({channel= message.inputPeer, id={message.id}}))
+  else
+    res = fixfp(messages.getMessages({id={message.id}}))
+  end
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    if res.messages[0] then
+      return true, callback(extra, true, tomsg(res.messages[0]))
+    else
+      return false, callback(extra, false, res)
+    end
+  end
+  return false, callback(extra, false, false)
+end
+
+function fwd_media(message, destination, callback, extra) --Doesn't works yet, i'll fix it soon or later
+  local res = {}
+  if message.inputPeer._ == "peerChannel" then
+    res = fixfp(channels.getMessages({channel= message.inputPeer, id={message.id}}))
+  else
+    res = fixfp(messages.getMessages({id={message.id}}))
+  end
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    local fwdMessage = res.messages[0] or false
+    if not fwdMessage then
+      return false, callback(extra, false, res)
+    end
+    if fwdMessage.media then
+      if fwdMessage.media._ == "messageMediaPhoto" then
+        local res = fixfp(messages.sendMedia({peer=destination,media={_="inputMediaPhoto",caption = fwdMessage.media.caption, id={_="inputPhoto", id=fwdMessage.media.photo.id, access_hash=fwdMessage.media.photo.access_hash}}}))
+        if res and not res == {} and not res.error then
+          return true, callback(extra, true, res)
+        else
+          return false, callback(extra, false, res)
+        end
+      elseif fwdMessage.media._ == "messageMediaDocument" then
+        local res = fixfp(messages.sendMedia({peer=destination,media={_="inputMediaDocument",caption = fwdMessage.media.caption, id={_="inputPhoto", id=fwdMessage.media.document.id, access_hash=fwdMessage.media.document.access_hash}}}))
+        if res and not res == {} and not res.error then
+          return true, callback(extra, true, res)
+        else
+          return false, callback(extra, false, res)
+        end
+      end
+    end
+  end
+  return false, callback(extra, false, false)
+end
+
+function fwd_msg(message, destination, callback, extra)
+  local res = fixfp(messages.forwardMessages({from_peer = message.inputPeer, to_peer = destination, id={message.id}}))
+  if res then
+    if res == {} or res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
