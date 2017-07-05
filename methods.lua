@@ -112,14 +112,16 @@ function send_msg(peer, text, callback, extra)
 end
 
 local function getMimeType(file_path)
+  local mime_type
   if useMediaInfo then
     local info = mediainfo(file_path)
-    if info:getMimeType() then
-      return info:getMimeType()
-    end
+    mime_type = info:getMimeType()
   end
-  local name = file_path:match("/?([%w_%.%-]+)$")
-  return mimetype.get_content_type(name:match("%.(%w+)$"))
+  if not mime_type then
+    local name = file_path:match("/?([%w_%.%-]+)$")
+    mime_type = mimetype.get_content_type(name:match("%.(%w+)$"))
+  end
+  return mime_type or ""
 end
 
 function send_document(peer, file_path, callback, extra)
