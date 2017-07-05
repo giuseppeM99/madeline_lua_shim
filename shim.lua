@@ -213,7 +213,7 @@ function packMembers(memberlist, users, filter)
   if not filter then
     filer = 1
   end
-  if memberlist.error then
+  if memberlist.error or not memberlist.participants then
     return false
   end
   for _, v in pairs(memberlist.participants) do
@@ -305,9 +305,5 @@ function madeline_update_callback(data)
     if msg then
       on_msg_receive(msg)
     end
-  end
-
-  if os.time() > lastCron+60 then
-    doCrons()
   end
 end

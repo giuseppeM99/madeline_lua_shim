@@ -39,5 +39,6 @@ while (true) {
         $Lua->madeline_update_callback($update['update']);
         echo PHP_EOL;
     }
+    $Lua->doCrons();
     \danog\MadelineProto\Serialization::serialize('bot.madeline', $Lua->MadelineProto);
 }

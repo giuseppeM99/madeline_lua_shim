@@ -71,7 +71,7 @@ function channel_get_users(input, callback, extra)
 end
 
 function channel_get_members(input, callback, extra)
-  return channel_get_members(input, callback, extra)
+  return channel_get_users(input, callback, extra)
 end
 
 function channel_get_bots(input, callback, extra)
@@ -211,8 +211,11 @@ function send_photo(peer, file_path, callback, extra)
   return false, callback(extra, false, false)
 end
 
---Errors errors always errors
 function chat_del_user(chat, user, callback, extra)
+  chat = chat:gsub("chat#i?d?", "")
+  if not chat:match("^%d+$") then
+    return false, callback(extra, error, {error = "CHAT_ID_INVALID"})
+  end
   local res = fixfp(messages.deleteChatUser({chat_id = chat, user_id = user}))
   if res then
     if res == {} or res.error then
