@@ -21,7 +21,11 @@ function loadBot()
   lastCron = os.time()
   print("Loading the bot...")
   loadfile("shim.lua")()
-  loadfile("bot/bot.lua")()
+  if not  io.open("bot/bot.lua") then
+    loadfile("bot/_bot.lua")()
+  else
+    loadfile("bot/bot.lua")()
+  end
   print("Bot loaded!")
 end
 
