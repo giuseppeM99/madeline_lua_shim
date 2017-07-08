@@ -8,4 +8,4 @@ try{
     die($e->getMessage().PHP_EOL);
 }
 \danog\MadelineProto\Serialization::serialize("bot.madeline", $madeline);
-echo $authorization._ == "auth.authorization"? "LOGGED AS ".$authorization->user['first_name']." ".$authorization->user['username']."[".$authorization->user['id']."]\n" : "LOGIN ERROR, RETRY LATER\n";
+echo $authorization['_'] == "auth.authorization"? "LOGGED AS ".$authorization['user']['first_name']." (".$authorization['user']['username'].") [".$authorization['user']['id']."]\n" : "LOGIN ERROR, RETRY LATER\n";
