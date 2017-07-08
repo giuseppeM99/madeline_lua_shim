@@ -31,7 +31,7 @@ foreach ($Lua->MadelineProto->get_methods_namespaced() as $method => $namespace)
 $offset = 0;
 while (true) {
 
-    $updates = $Lua->MadelineProto->API->get_updates(['offset' => $offset, 'limit' => 50, 'timeout' => 0])
+    $updates = $Lua->MadelineProto->API->get_updates(['offset' => $offset, 'limit' => 50, 'timeout' => 0]);
 
     foreach ($updates as $update) {
         $offset = $update['update_id'] + 1;
