@@ -15,6 +15,8 @@ function print(...) --just to put a \n at the end :D
   io.write("\n")
 end
 
+methodsPath = "methods.lua"
+
 function loadBot()
   started = false
   crons = {}

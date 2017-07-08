@@ -294,7 +294,7 @@ function madeline_update_callback(data)
     on_binlog_replay_end()
     on_our_id(fixfp(get_self().id))
   end
-  loadfile("methods.lua")()
+  loadfile(methodsPath)()
   data = fixfp(data)
   print("Got update", data._)
   if data._ == "updateChannel" then

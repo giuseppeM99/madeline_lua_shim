@@ -10,21 +10,18 @@ See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU General Public License along with MadelineProto.
 If not, see <http://www.gnu.org/licenses/>.
 */
+
 //See https://github.com/danog/MadelineProto/blob/master/lua/madeline.php
+
 require 'vendor/autoload.php';
 $settings = ['app_info' => ['api_id' => 6, 'api_hash' => 'eb06d4abfb49dc3eeb1aeb98ae0f581e'], 'logger' => ['loglevel' => \danog\MadelineProto\Logger::ERROR]];
 $Lua = false;
+
 try {
     $Lua = new \danog\MadelineProto\Lua('start.lua', \danog\MadelineProto\Serialization::deserialize('bot.madeline'));
 } catch (\danog\MadelineProto\Exception $e) {
+    die($e->getMessage().PHP_EOL);
 }
-    if (file_exists('token.php') && !is_object($Lua)) {
-        include_once 'token.php';
-        $MadelineProto = new \danog\MadelineProto\API($settings);
-        $authorization = $MadelineProto->bot_login($token);
-        \danog\MadelineProto\Logger::log([$authorization], \danog\MadelineProto\Logger::NOTICE);
-        $Lua = new \danog\MadelineProto\Lua('start.lua', $MadelineProto);
-    }
 
 $Lua->MadelineProto->lua = true;
 foreach ($Lua->MadelineProto->get_methods_namespaced() as $method => $namespace) {
@@ -33,12 +30,16 @@ foreach ($Lua->MadelineProto->get_methods_namespaced() as $method => $namespace)
 
 $offset = 0;
 while (true) {
-    $updates = $Lua->MadelineProto->API->get_updates(['offset' => $offset, 'limit' => 50, 'timeout' => 0]); // Just like in the bot API, you can specify an offset, a limit and a timeout
+
+    $updates = $Lua->MadelineProto->API->get_updates(['offset' => $offset, 'limit' => 50, 'timeout' => 0])
+
     foreach ($updates as $update) {
-        $offset = $update['update_id'] + 1; // Just like in the bot API, the offset must be set to the last update_id
+        $offset = $update['update_id'] + 1;
         $Lua->madeline_update_callback($update['update']);
         echo PHP_EOL;
     }
+
     $Lua->doCrons();
     \danog\MadelineProto\Serialization::serialize('bot.madeline', $Lua->MadelineProto);
+
 }

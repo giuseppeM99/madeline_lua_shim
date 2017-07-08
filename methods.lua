@@ -10,8 +10,9 @@ function (..., callback, extra)
   return false, callback(extra, false, false)
 end
 ]]
-
-mimetype = require "mimetype"
+if not mimetype then
+  mimetype = require "mimetype"
+end
 
 resolve_username_madeline = resolve_username
 
