@@ -20,7 +20,6 @@ methodsPath = "methods.lua"
 function loadBot()
   started = false
   crons = {}
-  lastCron = os.time()
   print("Loading the bot...")
   loadfile("shim.lua")()
   if not  io.open("bot/bot.lua") then
@@ -34,7 +33,6 @@ end
 --Loading initial values
 started = false
 crons = {}
-lastCron = os.time()
 if os.execute("mediainfo -h") then
   useMediaInfo = true
   mediainfo = loadfile("mediainfo.lua")()

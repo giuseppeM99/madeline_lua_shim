@@ -285,25 +285,29 @@ function doCrons()
       table.remove(crons, k)
     end
   end
-  lastCron = ts
 end
 
 
 function madeline_update_callback(data)
-  if not started then
+  if not started or data._ == "init" then
     on_binlog_replay_end()
     on_our_id(fixfp(get_self().id))
   end
+
   loadfile(methodsPath)()
   data = fixfp(data)
   print("Got update", data._)
+
   if data._ == "updateChannel" then
     --retrive channel info, parse and call on_channel_update
-  end
-  if data._ == "updateNewChannelMessage" or data._ == "updateNewMessage" then
+  elseif data._ == "updateNewChannelMessage" or data._ == "updateNewMessage" then
+
     local msg = tgmsg(data)
     if msg then
       on_msg_receive(msg)
     end
+
+  elseif data._ == "init" then
+
   end
 end
