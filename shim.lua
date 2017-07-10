@@ -133,7 +133,7 @@ function packService(info, pack)
     pack.chat_id = info.chat_id
   elseif info._ == "messageActionPinMessage" then
     pack.type = "pin_message"
-  elseif info._ == "messageActionChatEtitTitle" then
+  elseif info._ == "messageActionChatEditTitle" then
     pack.type = "chat_edit_title"
     pack.title = info.title
   end
