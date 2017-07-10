@@ -236,39 +236,39 @@ function packMembers(memberlist, users, filter)
 end
 
 -- Create the tg-cli style msg object
-function tgmsg(data)
+function tgmsg(message)
   msg = {}
   msg.to = {}
   msg.from = {}
-  packInfo(fixfp(get_info(data.message.to_id)), msg.to)
-  if data.message.from_id then
-    packInfo(fixfp(get_info(data.message.from_id)), msg.from)
+  packInfo(fixfp(get_info(message.to_id)), msg.to)
+  if message.from_id then
+    packInfo(fixfp(get_info(message.from_id)), msg.from)
   else
     msg.from = msg.to
   end
-  if data.message.fwd_from then
-    msg.fwd_date = data.message.fwd_from.date
+  if message.fwd_from then
+    msg.fwd_date = message.fwd_from.date
     msg.fwd_from = {}
-    packInfo(fixfp(get_info(data.message.fwd_from.channel_id or data.message.fwd_from.from_id, msg.fwd_from)))
+    packInfo(fixfp(get_info(message.fwd_from.channel_id or message.fwd_from.from_id, msg.fwd_from)))
   end
-  msg.text = data.message.message
-  msg.out = data.message.out
-  msg.message_id = data.message.id
-  msg.id = {inputPeer = data.message.to_id, message_id = data.message.id}
+  msg.text = message.message
+  msg.out = message.out
+  msg.message_id = message.id
+  msg.id = {inputPeer = message.to_id, message_id = message.id}
   msg.service = false
-  if data.message.action then
+  if message.action then
     msg.service = true
-    msg.action = packService(data.message.action, {})
+    msg.action = packService(message.action, {})
   end
-  if data.message.reply_to_msg_id then
+  if message.reply_to_msg_id then
     msg.reply_id = {}
-    msg.reply_id.inputPeer = deepcopy(data.message.to_id)
-    msg.reply_id.id = data.message.reply_to_msg_id
+    msg.reply_id.inputPeer = deepcopy(message.to_id)
+    msg.reply_id.id = message.reply_to_msg_id
   end
-  if data.message.media then
-    msg.media = packMedia(data.message.media, {})
+  if message.media then
+    msg.media = packMedia(message.media, {})
   end
-  msg.date = data.message.date
+  msg.date = message.date
   msg.flags = 1
   return msg
 end
@@ -302,7 +302,7 @@ function madeline_update_callback(data)
     --retrive channel info, parse and call on_channel_update
   elseif data._ == "updateNewChannelMessage" or data._ == "updateNewMessage" then
 
-    local msg = tgmsg(data)
+    local msg = tgmsg(data.message)
     if msg then
       on_msg_receive(msg)
     end
