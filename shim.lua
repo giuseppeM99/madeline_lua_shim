@@ -309,5 +309,7 @@ function madeline_update_callback(data)
 
   elseif data._ == "init" then
 
+  else
+    --vardump(data)
   end
 end

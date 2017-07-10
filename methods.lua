@@ -263,7 +263,7 @@ function get_message(message, callback, extra)
       return false, callback(extra, false, res)
     end
     if res.messages[0] then
-      return true, callback(extra, true, tomsg(res.messages[0]))
+      return true, callback(extra, true, tgmsg(res.messages[0]))
     else
       return false, callback(extra, false, res)
     end
