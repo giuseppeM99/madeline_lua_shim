@@ -1,5 +1,6 @@
 --[[ //Base function
 function (..., callback, extra)
+  local callback = callback or ok_cb
   local res = madeline.method(...)
   if res then
     if res == {} or res.error then
@@ -10,6 +11,50 @@ function (..., callback, extra)
   return false, callback(extra, false, false)
 end
 ]]
+--[[ TODO
+  CHANNELS
+    chat_upgrad
+    create_channel
+    rename_channel
+    channel_set_photo
+    channel_set_about
+    channel_set_username
+    channel_set_admin
+    channel_set_mod
+    channel_demote
+  DIALOGS & CONTACTS
+    get_contact_list
+    get_dialog_list
+    channel_list
+    add_contact
+    del_contact
+    rename_contact
+  CHAT
+    rename_chat
+    create_group_chat
+    chat_set_photo
+  PROFILE
+    set_profile_photo
+    set_profile_name
+    set_profile_username
+  MEDIA
+    load_photo
+    load_video
+    load_video_thumb
+    load_audio
+    load_document
+    load_document_thumb
+    fwd_media
+    send_contact
+    send_location
+  MESSAGE
+    msg_search
+    msg_global_search
+    mark_read
+--]]
+local function ok_cb(a,b,c)
+end
+
 if not mimetype then
   mimetype = require "mimetype"
 end
@@ -17,7 +62,8 @@ end
 resolve_username_madeline = resolve_username
 
 function resolve_username(username, callback, extra)
-  local res = fixfp(get_info(username))
+  local callback = callback or ok_cb
+  local res = fixfp(get_full_info(username))
   if res then
     if res == {} or res.error then
       return false, callback(extra, false, res)
@@ -27,27 +73,57 @@ function resolve_username(username, callback, extra)
   return false, callback(extra, false, false)
 end
 
+function user_info(input, callback, extra)
+  local callback = callback or ok_cb
+  local res = fixfp(get_full_info(input))
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    local rr = {}
+    packInfo(res, rr)
+    if rr ~= {} then
+      return true, callback(extra, true, rr)
+    end
+    return false, callback(extra, false, {error = "Peer is not an user"})
+  end
+  return false, callback(extra, false, false)
+end
+
 function chat_info(input, callback, extra)
-  local res = fixfp(get_info(input))
+  local callback = callback or ok_cb
+  local res = fixfp(get_full_info(input))
   if res then
     if res == {} or res.error or not res.type == "chat" then
       return false, callback(extra, false, res)
     end
-    local res = packInfo(res, {})
-    res.members = packMembers(fixfp(get_pwr_chat(input)), {}, 1)
-    return true, callback(extra, true, res)
+    local rres = packInfo(res, {})
+    rres.members = {}
+    for k, v in pairs(res.full.participants.participants) do
+      local user  = {}
+      packInfo(fixfp(get_full_info(v.user_id)), user)
+      if v._ == 'chatParticipantAdmin' then
+        user.admin = true
+      elseif v._ == 'chatParticipantCreator' then
+        user.creator = true
+        user.admin = true
+      end
+      table.insert(rres.members, user)
+    end
+    --local s = packMembers(rres, rres.members, 1)
+    return true, callback(extra, true, rres)
   end
   return false, callback(extra, false, false)
 end
 
 function channel_info(input, callback, extra)
-  local res = fixfp(get_info(input))
+  local callback = callback or ok_cb
+  local res = fixfp(get_full_info(input))
   if res then
     if res == {} or res.error or not res.type == "channel" then
       return false, callback(extra, false, res)
     end
     res = packInfo(res, {})
-    res.about = get_pwr_chat(input).about
     return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
@@ -67,6 +143,7 @@ local function _channel_get_users(channel, filter)
 end
 
 function channel_get_users(input, callback, extra)
+  local callback = callback or ok_cb
   local success, result =_channel_get_users(input, 1)
   return success, callback(extra, success, result)
 end
@@ -76,16 +153,83 @@ function channel_get_members(input, callback, extra)
 end
 
 function channel_get_bots(input, callback, extra)
+  local callback = callback or ok_cb
   local success, result =_channel_get_users(input, 3)
   return success, callback(extra, success, result)
 end
 
 function channel_get_admins(input, callback, extra)
+  local callback = callback or ok_cb
   local success, result =_channel_get_users(input, 2)
   return success, callback(extra, success, result)
 end
 
+function import_chat_link(hash, callback, extra)
+  local callback = callback or ok_cb
+  local res = fixfp(messages.importChatInvite({hash = hash}))
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function export_chat_link(chat, callback, extra)
+  local callback = callback or ok_cb
+  local res = chat:match("chat#i?d?") and fixfp(messages.exportChatInvite({chat_id = chat})) or fixfp(channels.exportInvite({channel=chat}))
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res.link)
+  end
+  return false, callback(extra, false, false)
+end
+
+function check_chat_link(chat, callback, extra)
+  local callback = callback or ok_cb
+  local res = fixfp(messages.checkChatInvite({chat_id = chat}))
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res.link)
+  end
+  return false, callback(extra, false, false)
+end
+
+function channel_leave(channel, callback, extra)
+  local callback = callback or ok_cb
+  local res = channels.leaveChannel({channel = channel})
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return  true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function leave_channel(channel, callback, extra)
+  return channel_leave(channel, callback, extra)
+end
+
+function channel_join(channel, callback, extra)
+  local callback = callback or ok_cb
+  local res = channels.joinChannel({channel = channel})
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
 function delete_msg(message, callback, extra)
+  local callback = callback or ok_cb
   local res = {}
   if message.inputPeer._ == "peerChannel" then
     res = fixfp(channels.deleteMessages({channel = message.inputPeer, id = {message.message_id}}))
@@ -102,6 +246,7 @@ function delete_msg(message, callback, extra)
 end
 
 function send_msg(peer, text, callback, extra)
+  local callback = callback or ok_cb
   local res = fixfp(messages.sendMessage({peer = peer, message = text}))
   if res then
     if res == {} or res.error then
@@ -126,6 +271,7 @@ local function getMimeType(file_path)
 end
 
 function send_document(peer, file_path, callback, extra)
+  local callback = callback or ok_cb
   local inputFile = upload(file_path)
   local filename = file_path:match("/?([%w_%.%-]+)$")
   local documentAttribute = {{_="documentAttributeFilename", file_name=filename}}
@@ -179,6 +325,7 @@ function send_document(peer, file_path, callback, extra)
 end
 
 function send_video(peer, file_path, callback, extra)
+  local callback = callback or ok_cb
   local inputFile = upload(file_path)
   local filename = file_path:match("/?([%w_%.%-]+)$")
   local documentAttribute = {{_="documentAttributeFilename", file_name=filename},{_="documentAttributeVideo", w=0, h=0, duration=0}}
@@ -200,6 +347,7 @@ function send_video(peer, file_path, callback, extra)
 end
 
 function send_photo(peer, file_path, callback, extra)
+  local callback = callback or ok_cb
   local inputFile = upload(file_path)
   local inputMedia = {_ = "inputMediaUploadedPhoto", file = inputFile, caption = ""}
   local res = fixfp(messages.sendMedia({peer = peer, media = inputMedia}))
@@ -212,7 +360,29 @@ function send_photo(peer, file_path, callback, extra)
   return false, callback(extra, false, false)
 end
 
+function send_file(peer, file_path, callback, extra)
+  return send_document(peer, file_path, callback, extra)
+end
+
+function send_text(peer, file_path, callback, extra)
+  local callback = callback or ok_cb
+  local r, f = pcall(io.open(file_path))
+  if not r then
+    return false, callback(extra, false, {error = 'Can not open file: ' .. file_path})
+  end
+  local r = f:read('*all')
+  f:close()
+  if not r then
+    return false, callback(extra, false, {error = 'Can not read from file: ' .. file_path})
+  end
+  if #r > 4096 then
+    return false, callback(extra, false, {error = 'Text file is too big'})
+  end
+  return send_msg(peer, r, callback, extra)
+end
+
 function chat_del_user(chat, user, callback, extra)
+  local callback = callback or ok_cb
   chat = chat:gsub("chat#i?d?", "")
   if not chat:match("^%d+$") then
     return false, callback(extra, error, {error = "CHAT_ID_INVALID"})
@@ -228,6 +398,7 @@ function chat_del_user(chat, user, callback, extra)
 end
 
 function channel_kick(channel, user, callback, extra)
+  local callback = callback or ok_cb
   local channelBannedRights={_='channelBannedRights', view_messages=true, send_messages=true, send_media=true, send_stickers=true, send_gifs=true, send_games=true, send_inline=true, embed_links=true, until_date=0}
   local res = fixfp(channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights}))
   if res then
@@ -240,6 +411,7 @@ function channel_kick(channel, user, callback, extra)
 end
 
 function channel_unblock(channel, user, callback, extra)
+  local callback = callback or ok_cb
   local channelBannedRights={_='channelBannedRights', view_messages=false, send_messages=false, send_media=false, send_stickers=false, send_gifs=false, send_games=false, send_inline=false, embed_links=false, until_date=0}
   local res = channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights})
   if res then
@@ -252,6 +424,7 @@ function channel_unblock(channel, user, callback, extra)
 end
 
 function get_message(message, callback, extra)
+  local callback = callback or ok_cb
   local res = {}
   if message.inputPeer._ == "peerChannel" then
     res = fixfp(channels.getMessages({channel= message.inputPeer, id={message.id}}))
@@ -272,6 +445,7 @@ function get_message(message, callback, extra)
 end
 
 function fwd_media(message, destination, callback, extra) --Doesn't works yet, i'll fix it soon or later
+  local callback = callback or ok_cb
   local res = {}
   if message.inputPeer._ == "peerChannel" then
     res = fixfp(channels.getMessages({channel= message.inputPeer, id={message.id}}))
@@ -308,6 +482,7 @@ function fwd_media(message, destination, callback, extra) --Doesn't works yet, i
 end
 
 function fwd_msg(message, destination, callback, extra)
+  local callback = callback or ok_cb
   local res = fixfp(messages.forwardMessages({from_peer = message.inputPeer, to_peer = destination, id={message.id}}))
   if res then
     if res == {} or res.error then

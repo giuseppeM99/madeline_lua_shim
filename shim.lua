@@ -64,6 +64,7 @@ function packInfo(info, pack)
     pack.access_hash = info.Chat.access_hash
     pack.bot_api_id = info.bot_api_id
     pack.participants_count = info.Chat.participants_count
+    pack.about = info.full and info.full.about
     pack.raw = info.Chat
   elseif info.type == "chat" then
     pack.peer_type = "chat"
@@ -195,18 +196,19 @@ function packMedia(media, pack)
   return pack
 end
 
-function parsePwrUser(user)
-  if user.type == "bot" then
-    user.bot = true
-    user.type = "user"
-  else
-    user.bot = false
+function parsePwrUser(user, pack)
+  pack = pack or {}
+  if user.type == "user" or user.type == "bot" then
+    pack.peer_type = "user"
+    pack.peer_id = user.id
+    pack.first_name = user.first_name
+    pack.last_name = user.last_name
+    pack.username = user.username
+    pack.bot = user.type == "bot"
+    pack.print_name = pack.last_name and (pack.first_name .. "_".. pack.last_name):gsub("%s", "_") or pack.first_name:gsub("%s", "_")
+    pack.about = user.about --Bio
   end
-  user.peer_id = user.id
-  user.peer_type = user.type
-  if user.first_name then
-    user.print_name = user.last_name and (user.first_name .. "_".. user.last_name):gsub("%s", "_") or user.first_name:gsub("%s", "_")
-  end
+  return pack
 end
 
 function packMembers(memberlist, users, filter)
@@ -217,7 +219,9 @@ function packMembers(memberlist, users, filter)
     return false
   end
   for _, v in pairs(memberlist.participants) do
-    parsePwrUser(v.user)
+    local u
+    parsePwrUser(v.user, u)
+    v.user= u 
     v.user.role = v.role
     if filter == 2 then
       if not v.role or v.role ~= "user" then --The method get_pwr_chat returns no role if the user is admin ATM
@@ -232,7 +236,7 @@ function packMembers(memberlist, users, filter)
     end
   end
 
-  return users
+  return true
 end
 
 -- Create the tg-cli style msg object
