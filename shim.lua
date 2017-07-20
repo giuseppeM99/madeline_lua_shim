@@ -221,7 +221,7 @@ function packMembers(memberlist, users, filter)
   for _, v in pairs(memberlist.participants) do
     local u
     parsePwrUser(v.user, u)
-    v.user= u 
+    v.user = u
     v.user.role = v.role
     if filter == 2 then
       if not v.role or v.role ~= "user" then --The method get_pwr_chat returns no role if the user is admin ATM

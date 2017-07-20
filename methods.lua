@@ -13,7 +13,6 @@ end
 ]]
 --[[ TODO
   CHANNELS
-    chat_upgrad
     create_channel
     rename_channel
     channel_set_photo
@@ -29,10 +28,6 @@ end
     add_contact
     del_contact
     rename_contact
-  CHAT
-    rename_chat
-    create_group_chat
-    chat_set_photo
   PROFILE
     set_profile_photo
     set_profile_name
@@ -164,6 +159,54 @@ function channel_get_admins(input, callback, extra)
   return success, callback(extra, success, result)
 end
 
+function create_group_chat(user, title, callback, extra)
+  local callback = callback or ok_cb
+  local res = messages.createChat({users = {user}, title=title})
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function rename_chat(chat, name, callback, extra)
+  local callback = callback or ok_cb
+  local res = messages.editChatTitle({chat_id = chat, title =name})
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function chat_set_photo(chat, photo_path, callback, extra)
+  local callback = callback or ok_cb
+  if not photo_path or type(photo_path) ~= 'string' then
+    return false, callback(extra, false, {error = 'Photo not provided'})
+  end
+  local inputFile = upload(photo_path)
+  if not inputFile then
+    return false, callback(extra, false, {error = 'Can not open file: ' .. photo_path})
+  end
+  local res = messages.editChatPhoto({chat_id = chat, photo = {_='inputChatUploadedPhoto', file = inputFile}})
+end
+
+function chat_upgrade(chat, callback, extra)
+  local callback = callback or ok_cb
+  local res = messages.migrateChat({chat_id = chat})
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
 function import_chat_link(hash, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(messages.importChatInvite({hash = hash}))
@@ -188,14 +231,14 @@ function export_chat_link(chat, callback, extra)
   return false, callback(extra, false, false)
 end
 
-function check_chat_link(chat, callback, extra)
+function check_chat_link(hash, callback, extra)
   local callback = callback or ok_cb
-  local res = fixfp(messages.checkChatInvite({chat_id = chat}))
+  local res = fixfp(messages.checkChatInvite({hash = hash}))
   if res then
     if res == {} or res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, res.link)
+    return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
 end

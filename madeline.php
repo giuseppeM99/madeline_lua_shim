@@ -37,6 +37,9 @@ while (true) {
 
     foreach ($updates as $update) {
         $offset = $update['update_id'] + 1;
+        if (isset($update['update']['message']) && isset($update['update']['message']['reply_markup']) && $update['update']['message']['reply_markup']['_'] == 'replyInlineMarkup') {
+            unset($update['update']['message']['reply_markup']['rows']); //buttons are bugged, and since they where never implemented in tg-cli i don't care if those infos are omitted
+        }
         $Lua->madeline_update_callback($update['update']);
         echo PHP_EOL;
     }
