@@ -39,13 +39,11 @@ end
     load_audio
     load_document
     load_document_thumb
-    fwd_media
     send_contact
     send_location
   MESSAGE
     msg_search
     msg_global_search
-    mark_read
 --]]
 local function ok_cb(a,b,c)
 end
@@ -505,14 +503,14 @@ function fwd_media(message, destination, callback, extra) --Doesn't works yet, i
     end
     if fwdMessage.media then
       if fwdMessage.media._ == "messageMediaPhoto" then
-        local res = fixfp(messages.sendMedia({peer=destination,media={_="inputMediaPhoto",caption = fwdMessage.media.caption, id={_="inputPhoto", id=fwdMessage.media.photo.id, access_hash=fwdMessage.media.photo.access_hash}}}))
+        local res = messages.sendMedia({peer=destination,media={_="inputMediaPhoto", caption = fwdMessage.media.caption or '', id={_="inputPhoto", id=fwdMessage.media.photo.id, access_hash=fwdMessage.media.photo.access_hash}}})
         if res and not res == {} and not res.error then
           return true, callback(extra, true, res)
         else
           return false, callback(extra, false, res)
         end
       elseif fwdMessage.media._ == "messageMediaDocument" then
-        local res = fixfp(messages.sendMedia({peer=destination,media={_="inputMediaDocument",caption = fwdMessage.media.caption, id={_="inputPhoto", id=fwdMessage.media.document.id, access_hash=fwdMessage.media.document.access_hash}}}))
+        local res = fixfp(messages.sendMedia({peer=destination,media={_="inputMediaDocument",caption = fwdMessage.media.caption or '', id={_="inputPhoto", id=fwdMessage.media.document.id, access_hash=fwdMessage.media.document.access_hash}}}))
         if res and not res == {} and not res.error then
           return true, callback(extra, true, res)
         else
@@ -534,4 +532,35 @@ function fwd_msg(message, destination, callback, extra)
     return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
+end
+
+function mark_read(peer, callback, extra)
+  local callback = callback or ok_cb
+  local peer = get_info(peer)
+  local res
+  if peer.InputChannel then
+    res = channels.readHistory({channel = peer.InputChannel, max_id = 0})
+  else
+    res = messages.readHistory({peer = peer.InputPeer, max_id = 0})
+  end
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function get_dialog_list(callback, extra)
+  local callback = callback or ok_cb
+  local res = get_dialogs(true)
+  if not res or res == {} or res.error then
+    return false, callback(extra, false, res)
+  end
+  local dialogs = {}
+  for _, v in pairs(res) do
+    table.insert(dialogs, {peer=packInfo(fixfp(get_full_info(v)))})
+  end
+  return true, callback(extra, true, dialogs)
 end
