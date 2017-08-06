@@ -1,7 +1,10 @@
 --[[
 Made with <3 by The Doctor
 For madeline_lua_tg madeline_lua_shim
+This file/script/whatever is under the http://www.wtfpl.net/txt/copying/ license
+Do What The Fuck You Want
 ]]
+
 local mediainfo = function(file)
   if not file then
     return false
