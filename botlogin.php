@@ -1,7 +1,7 @@
 <?php
 require "vendor/autoload.php";
 
-$settings = ['app_info' => ['api_id' => 6, 'api_hash' => 'eb06d4abfb49dc3eeb1aeb98ae0f581e'], 'logger' => ['logger_level' => \danog\MadelineProto\Logger::ERROR]];
+$settings = ['app_info' => ['api_id' => 6, 'api_hash' => 'eb06d4abfb49dc3eeb1aeb98ae0f581e'], 'logger' => ['logger_level' => \danog\MadelineProto\Logger::ERROR], 'rollbar_token' => '260ca5acd9c1443faef9f19c29f2a6e3'];
 $madeline = new \danog\MadelineProto\API($settings);
 
 try {

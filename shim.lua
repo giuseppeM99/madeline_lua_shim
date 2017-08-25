@@ -32,7 +32,7 @@ function fixfp(data)
    return data
  end
  if type(data) == "number" then
-   return math.ceil(data) == data and math.ceil(data) or data
+   return math.tointeger and math.tointeger(data) or data
  end
  if type(data) == "table" then
    for k, v in pairs(data) do
@@ -137,6 +137,8 @@ function packService(info, pack)
   elseif info._ == "messageActionChatEditTitle" then
     pack.type = "chat_edit_title"
     pack.title = info.title
+  elseif info._ == "messageActionPhoneCall" then
+    phoneCalls[info.call_id] = nil
   end
 
   return pack
@@ -258,7 +260,7 @@ function tgmsg(message)
   msg.text = message.message
   msg.out = message.out
   msg.message_id = message.id
-  msg.id = {inputPeer = message.to_id, message_id = message.id}
+  msg.id = {inputPeer = message.to_id, id = message.id}
   msg.service = false
   if message.action then
     msg.service = true
@@ -294,6 +296,9 @@ end
 
 function madeline_update_callback(data)
   if not started or data._ == "init" then
+    if not phoneCalls then
+      phoneCalls = {}
+    end
     on_binlog_replay_end()
     on_our_id(fixfp(get_self().id))
   end
@@ -311,8 +316,27 @@ function madeline_update_callback(data)
       on_msg_receive(msg)
     end
 
-  elseif data._ == "init" then
-
+  elseif data._ == "updatePhoneCall" then
+    --[=[
+    local phoneCall = data.phone_call
+    if phoneCall.getCallState() == 1 then
+      phoneCall.configuration.enable_NS = false
+      phoneCall.configuration.enable_AGC = false
+      phoneCall.configuration.enable_AEC = false
+      phoneCall.configuration.shared_config = {
+        audio_init_bitrate = 70*1000,
+        audio_max_bitrate = 100*1000,
+        audio_min_bitrate = 15*1000
+      }
+      phoneCall.parseConfig()
+      phoneCall.accept()
+      local cid = phoneCall.getCallID()
+      vardump(cid)
+      phoneCalls[cid['id']] = phoneCall
+      phoneCall.play('input.raw')
+      phoneCall['then']('inputb.raw')
+    end
+    --]=]
   else
     --vardump(data)
   end

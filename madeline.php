@@ -21,25 +21,32 @@ try {
     die($e->getMessage().PHP_EOL);
 }
 
-$Lua->MadelineProto->lua = true;
-foreach ($Lua->MadelineProto->get_methods_namespaced() as $method => $namespace) {
-    $Lua->MadelineProto->{$namespace}->lua = true;
+function ser()
+{
+    global $Lua;
+    $Lua->MadelineProto->serialize('bot.madeline');
+}
+
+$Lua->registerCallback('serialize', 'ser');
+
+if (!file_exists('download')) {
+    mkdir('download');
 }
 
 $Lua->madeline_update_callback(['_' => 'init']);
-
 $offset = 0;
+$lastSer = time();
 while (true) {
     $updates = $Lua->MadelineProto->API->get_updates(['offset' => $offset, 'limit' => 50, 'timeout' => 0]);
     foreach ($updates as $update) {
         $offset = $update['update_id'] + 1;
-        if (isset($update['update']['message']) && isset($update['update']['message']['reply_markup']) && $update['update']['message']['reply_markup']['_'] == 'replyInlineMarkup') {
-            unset($update['update']['message']['reply_markup']['rows']); //buttons are bugged, and since they where never implemented in tg-cli i don't care if those infos are omitted
-        }
         $Lua->madeline_update_callback($update['update']);
         echo PHP_EOL;
     }
 
     $Lua->doCrons();
-    $Lua->MadelineProto->serialize('bot.madeline');
+    if (time()-60 >= $lastSer) {
+        ser();
+        $lastSer = time();
+    }
 }

@@ -45,7 +45,7 @@ end
     msg_search
     msg_global_search
 --]]
-local function ok_cb(a,b,c)
+local function ok_cb(a, b, c)
 end
 
 if not mimetype then
@@ -93,7 +93,7 @@ function chat_info(input, callback, extra)
     local rres = packInfo(res, {})
     rres.members = {}
     for k, v in pairs(res.full.participants.participants) do
-      local user  = {}
+      local user = {}
       packInfo(fixfp(get_full_info(v.user_id)), user)
       if v._ == 'chatParticipantAdmin' then
         user.admin = true
@@ -137,7 +137,7 @@ end
 
 function channel_get_users(input, callback, extra)
   local callback = callback or ok_cb
-  local success, result =_channel_get_users(input, 1)
+  local success, result = _channel_get_users(input, 1)
   return success, callback(extra, success, result)
 end
 
@@ -147,19 +147,19 @@ end
 
 function channel_get_bots(input, callback, extra)
   local callback = callback or ok_cb
-  local success, result =_channel_get_users(input, 3)
+  local success, result = _channel_get_users(input, 3)
   return success, callback(extra, success, result)
 end
 
 function channel_get_admins(input, callback, extra)
   local callback = callback or ok_cb
-  local success, result =_channel_get_users(input, 2)
+  local success, result = _channel_get_users(input, 2)
   return success, callback(extra, success, result)
 end
 
 function create_group_chat(user, title, callback, extra)
   local callback = callback or ok_cb
-  local res = messages.createChat({users = {user}, title=title})
+  local res = messages.createChat({users = {user}, title = title})
   if res then
     if res == {} or res.error then
       return false, callback(extra, false, res)
@@ -171,7 +171,7 @@ end
 
 function rename_chat(chat, name, callback, extra)
   local callback = callback or ok_cb
-  local res = messages.editChatTitle({chat_id = chat, title =name})
+  local res = messages.editChatTitle({chat_id = chat, title = name})
   if res then
     if res == {} or res.error then
       return false, callback(extra, false, res)
@@ -190,7 +190,7 @@ function chat_set_photo(chat, photo_path, callback, extra)
   if not inputFile then
     return false, callback(extra, false, {error = 'Can not open file: ' .. photo_path})
   end
-  local res = messages.editChatPhoto({chat_id = chat, photo = {_='inputChatUploadedPhoto', file = inputFile}})
+  local res = messages.editChatPhoto({chat_id = chat, photo = {_ = 'inputChatUploadedPhoto', file = inputFile}})
 end
 
 function chat_upgrade(chat, callback, extra)
@@ -219,7 +219,7 @@ end
 
 function export_chat_link(chat, callback, extra)
   local callback = callback or ok_cb
-  local res = chat:match("chat#i?d?") and fixfp(messages.exportChatInvite({chat_id = chat})) or fixfp(channels.exportInvite({channel=chat}))
+  local res = chat:match("chat#i?d?") and fixfp(messages.exportChatInvite({chat_id = chat})) or fixfp(channels.exportInvite({channel = chat}))
   if res then
     if res == {} or res.error then
       return false, callback(extra, false, res)
@@ -248,7 +248,7 @@ function channel_leave(channel, callback, extra)
     if res == {} or res.error then
       return false, callback(extra, false, res)
     end
-    return  true, callback(extra, true, res)
+    return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
 end
@@ -273,12 +273,12 @@ function delete_msg(message, callback, extra)
   local callback = callback or ok_cb
   local res = {}
   if message.inputPeer._ == "peerChannel" then
-    res = fixfp(channels.deleteMessages({channel = message.inputPeer, id = {message.message_id}}))
+    res = fixfp(channels.deleteMessages({channel = message.inputPeer, id = {message.id}}))
   else
-    res = fixfp(messages.deleteMessages({revoke = true, id = {message.message_id}})) -- so this method does not exist? https://daniil.it/MadelineProto/API_docs/methods/messages_deleteMessages.html
+    res = fixfp(messages.deleteMessages({revoke = true, id = {message.id}})) -- so this method does not exist? https://daniil.it/MadelineProto/API_docs/methods/messages_deleteMessages.html
   end
   if res then
-    if res == {}  or res.error then
+    if res == {} or res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -315,12 +315,12 @@ function send_document(peer, file_path, callback, extra)
   local callback = callback or ok_cb
   local inputFile = upload(file_path)
   local filename = file_path:match("/?([%w_%.%-]+)$")
-  local documentAttribute = {{_="documentAttributeFilename", file_name=filename}}
+  local documentAttribute = {{_ = "documentAttributeFilename", file_name = filename}}
   local mime_type = getMimeType(file_path)
   if useMediaInfo then
     if mime_type:match("video") then
       local info = mediainfo(file_path)
-      local va = {_="documentAttributeVideo"}
+      local va = {_ = "documentAttributeVideo"}
       if info:getWidth() then
         va.w = info:getWidth()
       end
@@ -332,7 +332,7 @@ function send_document(peer, file_path, callback, extra)
       end
     elseif mime_type:match("image") then
       local info = mediainfo(file_path)
-      local va = {_="documentAttributeImageSize"}
+      local va = {_ = "documentAttributeImageSize"}
       if info:getWidth() then
         va.w = info:getWidth()
       end
@@ -341,7 +341,7 @@ function send_document(peer, file_path, callback, extra)
       end
     elseif mime_type:match("audio") then
       local info = mediainfo(file_path)
-      local va = {_="documentAttributeAudio"}
+      local va = {_ = "documentAttributeAudio"}
       if info:getDuration() then
         va.duration = info:getDuration()
       end
@@ -369,7 +369,7 @@ function send_video(peer, file_path, callback, extra)
   local callback = callback or ok_cb
   local inputFile = upload(file_path)
   local filename = file_path:match("/?([%w_%.%-]+)$")
-  local documentAttribute = {{_="documentAttributeFilename", file_name=filename},{_="documentAttributeVideo", w=0, h=0, duration=0}}
+  local documentAttribute = {{_ = "documentAttributeFilename", file_name = filename}, {_ = "documentAttributeVideo", w = 0, h = 0, duration = 0}}
   if useMediaInfo then
     local info = mediainfo(file_path)
     documentAttribute[2].w = info:getWidth()
@@ -440,7 +440,7 @@ end
 
 function channel_kick(channel, user, callback, extra)
   local callback = callback or ok_cb
-  local channelBannedRights={_='channelBannedRights', view_messages=true, send_messages=true, send_media=true, send_stickers=true, send_gifs=true, send_games=true, send_inline=true, embed_links=true, until_date=0}
+  local channelBannedRights = {_ = 'channelBannedRights', view_messages = true, send_messages = true, send_media = true, send_stickers = true, send_gifs = true, send_games = true, send_inline = true, embed_links = true, until_date = 0}
   local res = fixfp(channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights}))
   if res then
     if res == {} or res.error then
@@ -453,7 +453,7 @@ end
 
 function channel_unblock(channel, user, callback, extra)
   local callback = callback or ok_cb
-  local channelBannedRights={_='channelBannedRights', view_messages=false, send_messages=false, send_media=false, send_stickers=false, send_gifs=false, send_games=false, send_inline=false, embed_links=false, until_date=0}
+  local channelBannedRights = {_ = 'channelBannedRights', view_messages = false, send_messages = false, send_media = false, send_stickers = false, send_gifs = false, send_games = false, send_inline = false, embed_links = false, until_date = 0}
   local res = channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights})
   if res then
     if res == {} or res.error then
@@ -468,9 +468,9 @@ function get_message(message, callback, extra)
   local callback = callback or ok_cb
   local res = {}
   if message.inputPeer._ == "peerChannel" then
-    res = fixfp(channels.getMessages({channel= message.inputPeer, id={message.id}}))
+    res = fixfp(channels.getMessages({channel = message.inputPeer, id = {message.id}}))
   else
-    res = fixfp(messages.getMessages({id={message.id}}))
+    res = fixfp(messages.getMessages({id = {message.id}}))
   end
   if res then
     if res == {} or res.error then
@@ -489,9 +489,9 @@ function fwd_media(message, destination, callback, extra) --Doesn't works yet, i
   local callback = callback or ok_cb
   local res = {}
   if message.inputPeer._ == "peerChannel" then
-    res = fixfp(channels.getMessages({channel= message.inputPeer, id={message.id}}))
+    res = fixfp(channels.getMessages({channel = message.inputPeer, id = {message.id}}))
   else
-    res = fixfp(messages.getMessages({id={message.id}}))
+    res = fixfp(messages.getMessages({id = {message.id}}))
   end
   if res then
     if res == {} or res.error then
@@ -503,14 +503,14 @@ function fwd_media(message, destination, callback, extra) --Doesn't works yet, i
     end
     if fwdMessage.media then
       if fwdMessage.media._ == "messageMediaPhoto" then
-        local res = messages.sendMedia({peer=destination,media={_="inputMediaPhoto", caption = fwdMessage.media.caption or '', id={_="inputPhoto", id=fwdMessage.media.photo.id, access_hash=fwdMessage.media.photo.access_hash}}})
+        local res = messages.sendMedia({peer = destination, media = {_ = "inputMediaPhoto", caption = fwdMessage.media.caption or '', id = {_ = "inputPhoto", id = fwdMessage.media.photo.id, access_hash = fwdMessage.media.photo.access_hash}}})
         if res and not res == {} and not res.error then
           return true, callback(extra, true, res)
         else
           return false, callback(extra, false, res)
         end
       elseif fwdMessage.media._ == "messageMediaDocument" then
-        local res = fixfp(messages.sendMedia({peer=destination,media={_="inputMediaDocument",caption = fwdMessage.media.caption or '', id={_="inputPhoto", id=fwdMessage.media.document.id, access_hash=fwdMessage.media.document.access_hash}}}))
+        local res = fixfp(messages.sendMedia({peer = destination, media = {_ = "inputMediaDocument", caption = fwdMessage.media.caption or '', id = {_ = "inputPhoto", id = fwdMessage.media.document.id, access_hash = fwdMessage.media.document.access_hash}}}))
         if res and not res == {} and not res.error then
           return true, callback(extra, true, res)
         else
@@ -524,7 +524,7 @@ end
 
 function fwd_msg(message, destination, callback, extra)
   local callback = callback or ok_cb
-  local res = fixfp(messages.forwardMessages({from_peer = message.inputPeer, to_peer = destination, id={message.id}}))
+  local res = fixfp(messages.forwardMessages({from_peer = message.inputPeer, to_peer = destination, id = {message.id}}))
   if res then
     if res == {} or res.error then
       return false, callback(extra, false, res)
@@ -560,7 +560,49 @@ function get_dialog_list(callback, extra)
   end
   local dialogs = {}
   for _, v in pairs(res) do
-    table.insert(dialogs, {peer=packInfo(fixfp(get_full_info(v)))})
+    table.insert(dialogs, {peer = packInfo(fixfp(get_full_info(v)))})
   end
   return true, callback(extra, true, dialogs)
+end
+
+local function _load(message, callback, extra)
+  local callback = callback or ok_cb
+  local res = {}
+  if message.inputPeer._ == "peerChannel" then
+    res = fixfp(channels.getMessages({channel = message.inputPeer, id = {message.id}}))
+  else
+    res = fixfp(messages.getMessages({id = {message.id}}))
+  end
+  local msg
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    msg = res.messages[0] or false
+    if not msg then
+      return false, callback(extra, false, res)
+    end
+  end
+  if msg.media then
+    local dw
+    if msg.media.photo then
+      dw = download_to_dir(msg.media.photo, 'download')
+    elseif msg.media.document then
+      vardump(msg.media)
+      dw = download_to_dir(msg.media.document, 'download')
+    else
+      return false, callback(extra, false, false)
+    end
+    if dw then
+      if dw.error or dw == {} then
+        return false, callback(extra, false, dw)
+      end
+      return true, callback(extra, true, dw)
+    end
+  end
+  return false, callback(extra, false, false)
+end
+
+function load_file(...)
+  return _load(...)
 end

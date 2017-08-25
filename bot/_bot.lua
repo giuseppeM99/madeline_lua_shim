@@ -40,6 +40,7 @@ function send_large_msg_callback(cb_extra, success, result)
 end
 
 function ok_cb(extra, success, result)
+  print(success)
   vardump(result)
 end
 
@@ -86,9 +87,11 @@ function on_msg_receive(msg)
       chat_info("chat#id" .. msg.to.peer_id, function(extra, success, result) send_large_msg_callback({destination = msg.to.raw, text = serpent.block(result, {comment = false})}) end, {})
     end
     if msg.text:match("^test$") then
-      fwd_media(msg.reply_id, myid, ok_cb, nil) --doesn't works
-      --fwd_msg(msg.reply_id, myid, ok_cb, nil)
-      --delete_msg(msg.id, ok_cb, nil)
+      vardump(load_file(msg.reply_id, ok_cb, nil))
+    end
+
+    if msg.media then
+      vardump(load_file(msg.id, ok_cb, nil))
     end
   end
 
@@ -98,7 +101,6 @@ function on_msg_receive(msg)
     send_document("user#id" .. msg.from.peer_id, "tardis.png", ok_cb, nil)
     send_photo("user#id" .. msg.from.peer_id, "tardis.jpg", ok_cb, nil)
   end
-
 end
 
 postpone(cron_func, nil, 60)
