@@ -1,8 +1,6 @@
-local serpent = require "serpent"
-
 -- for debug
 function vardump(...)
-  print(serpent.block({...}, {comment=false}))
+  print((serpent or require('serpent')).block({...}, {comment=false}))
 end
 
 --https://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value#641993
