@@ -5,7 +5,7 @@ $settings = ['app_info' => ['api_id' => 6, 'api_hash' => 'eb06d4abfb49dc3eeb1aeb
 $madeline = new \danog\MadelineProto\API($settings);
 
 try {
-    $authorization = $madeline->bot_login(readline("Insert the bot token here: "));
+    $authorization = $madeline->bot_login(readline("Enter the bot token here: "));
 } catch (\danog\MadelineProto\RPCErrorException $e) {
     die($e->getMessage().PHP_EOL);
 }

@@ -197,7 +197,7 @@ function packMedia(media, pack)
 end
 
 function parsePwrUser(user, pack)
-  pack = pack or {}
+  local pack = pack or {}
   if user.type == "user" or user.type == "bot" then
     pack.peer_type = "user"
     pack.peer_id = user.id
@@ -219,9 +219,7 @@ function packMembers(memberlist, users, filter)
     return false
   end
   for _, v in pairs(memberlist.participants) do
-    local u
-    parsePwrUser(v.user, u)
-    v.user = u
+    v.user = parsePwrUser(v.user)
     v.user.role = v.role
     if filter == 2 then
       if not v.role or v.role ~= "user" then --The method get_pwr_chat returns no role if the user is admin ATM
