@@ -22,6 +22,7 @@ function loadBot()
   crons = {}
   print("Loading the bot...")
   loadfile("shim.lua")()
+  _methods = loadfile(methodsPath)
   if not  io.open("bot/bot.lua") then
     loadfile("bot/_bot.lua")()
   else

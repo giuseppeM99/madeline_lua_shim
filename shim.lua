@@ -5,7 +5,7 @@ end
 
 --https://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value#641993
 function deepcopy(o, seen)
-  seen = seen or {}
+  local seen = seen or {}
   if o == nil then return nil end
   if seen[o] then return seen[o] end
 
@@ -47,9 +47,7 @@ end
 
 -- Pack infos from the madeline function get_info in a tg-cli like object
 function packInfo(info, pack)
-  if not pack then
-    pack = {}
-  end
+  local pack = pack or {}
   if info.type == "channel" or info.type == "supergroup" then
     pack.peer_type = "channel"
     pack.peer_id = info.channel_id
@@ -96,9 +94,7 @@ function packInfo(info, pack)
 end
 
 function packService(info, pack)
-  if not pack then
-    pack = {}
-  end
+  local pack = pack or {}
   print("Handling service message", info._)
   if info._ == "messageActionChatAddUser" then
     pack.type = "chat_add_user"
@@ -143,35 +139,38 @@ function packService(info, pack)
 end
 
 function packMedia(media, pack)
-  if not pack then
-    pack = {}
-  end
+  local pack = pack or {}
   if media._ == "messageMediaPhoto" then
     pack.type = "photo"
     pack.caption = media.caption
   elseif media._ == "messageMediaGeo" then
     pack.type = "geo"
     pack.longiture = media.geo.long
-    pack.latitude = media.geo.loat
+    pack.latitude = media.geo.lat
   elseif media._ == "messageMediaContact" then
     pack.type = "contact"
     pack.phone = media.phone_number
     pack.first_name = media.first_name
-    pack.last_name = media.last_name
+    pack.last_name = media.last_name ~= '' and media.last_name or nil
     pack.user_id = media.user_id
   elseif media._ == "messageMediaUnsupported" then
     pack.type = "unsupported"
   elseif media._ == "messageMediaDocument" then
     pack.type = "document"
     pack.caption = media.caption
-    if media.document.attributes._ == "documentAttributeVideo" then
-      pack.type = "video"
-    elseif media.document.attributes._ == "documentAttributeAudio" then
-      pack.type = "audio"
-    elseif media.document.attributes._ == "documentAttributeSticker" then
-      pack.subtype = "sticker"
-    elseif media.document.attributes._ == "documentAttributeAnimated" then
-      pack.subtype = "gif"
+    for _, v in pairs(media.document.attributes) do
+      if v._ == "documentAttributeVideo" then
+        pack.type = "video"
+      elseif v._ == "documentAttributeAudio" then
+        pack.type = "audio"
+      elseif v._ == "documentAttributeSticker" then
+        pack.subtype = "sticker"
+      elseif v._ == "documentAttributeAnimated" then
+        pack.subtype = "gif"
+      elseif v._ == "documentAttributeFilename" then
+        pack.file_name = v.file_name
+        pack.document_caption = v.file_name
+      end
     end
   elseif media._ == "messageMediaWebPage" then
     pack.type = "webpage"
@@ -212,9 +211,7 @@ function parsePwrUser(user, pack)
 end
 
 function packMembers(memberlist, users, filter)
-  if not filter then
-    filer = 1
-  end
+  local filter = filter or 1
   if memberlist.error or not memberlist.participants then
     return false
   end
@@ -239,7 +236,7 @@ end
 
 -- Create the tg-cli style msg object
 function tgmsg(message)
-  msg = {}
+  local msg = {}
   msg.to = {}
   msg.from = {}
   packInfo(fixfp(get_info(message.to_id)), msg.to)
@@ -295,12 +292,13 @@ function madeline_update_callback(data)
     if not phoneCalls then
       phoneCalls = {}
     end
+    _methods = loadfile(methodsPath)
     on_binlog_replay_end()
     on_our_id(fixfp(get_self().id))
   end
 
-  loadfile(methodsPath)()
-  data = fixfp(data)
+  _methods()
+  local data = fixfp(data)
   print("Got update", data._)
 
   if data._ == "updateChannel" then

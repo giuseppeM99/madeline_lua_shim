@@ -22,9 +22,6 @@ end
     channel_set_mod
     channel_demote
   DIALOGS & CONTACTS
-    get_contact_list
-    get_dialog_list
-    channel_list
     add_contact
     del_contact
     rename_contact
@@ -32,18 +29,6 @@ end
     set_profile_photo
     set_profile_name
     set_profile_username
-  MEDIA
-    load_photo
-    load_video
-    load_video_thumb
-    load_audio
-    load_document
-    load_document_thumb
-    send_contact
-    send_location
-  MESSAGE
-    msg_search
-    msg_global_search
 --]]
 local function ok_cb(a, b, c)
 end
@@ -113,10 +98,13 @@ function channel_info(input, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(get_full_info(input))
   if res then
-    if res == {} or res.error or not res.type == "channel" then
+    if res == {} or res.error then
       return false, callback(extra, false, res)
     end
     res = packInfo(res, {})
+    if res.peer_type ~= 'channel' then
+      return false, callback(extra, false, false)
+    end
     return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
@@ -293,7 +281,7 @@ function send_msg(peer, text, callback, extra)
     if res == {} or res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, res)
+    return true, callback(extra, true, tgmsg(res.updates[1].message))
   end
   return false, callback(extra, false, false)
 end
@@ -360,7 +348,7 @@ function send_document(peer, file_path, callback, extra)
     if res == {} or res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, res)
+    return true, callback(extra, true, tgmsg(res.updates[1].message))
   end
   return false, callback(extra, false, false)
 end
@@ -382,7 +370,7 @@ function send_video(peer, file_path, callback, extra)
     if res == {} or res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, res)
+    return true, callback(extra, true, tgmsg(res.updates[1].message))
   end
   return false, callback(extra, false, false)
 end
@@ -396,7 +384,7 @@ function send_photo(peer, file_path, callback, extra)
     if res == {} or res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, res)
+    return true, callback(extra, true, tgmsg(res.updates[1].message))
   end
   return false, callback(extra, false, false)
 end
@@ -512,7 +500,7 @@ function fwd_media(message, destination, callback, extra) --Doesn't works yet, i
       elseif fwdMessage.media._ == "messageMediaDocument" then
         local res = fixfp(messages.sendMedia({peer = destination, media = {_ = "inputMediaDocument", caption = fwdMessage.media.caption or '', id = {_ = "inputPhoto", id = fwdMessage.media.document.id, access_hash = fwdMessage.media.document.access_hash}}}))
         if res and not res == {} and not res.error then
-          return true, callback(extra, true, res)
+          return true, callback(extra, true, tgmsg(res.updates[1].message))
         else
           return false, callback(extra, false, res)
         end
@@ -529,7 +517,7 @@ function fwd_msg(message, destination, callback, extra)
     if res == {} or res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, res)
+    return true, callback(extra, true, tgmsg(res.updates[1].message))
   end
   return false, callback(extra, false, false)
 end
@@ -554,18 +542,19 @@ end
 
 function get_dialog_list(callback, extra)
   local callback = callback or ok_cb
-  local res = get_dialogs(true)
+  local res = get_dialogs()
   if not res or res == {} or res.error then
     return false, callback(extra, false, res)
   end
   local dialogs = {}
   for _, v in pairs(res) do
-    table.insert(dialogs, {peer = packInfo(fixfp(get_full_info(v)))})
+    local p = packInfo(fixfp(get_full_info(v)))
+    table.insert(dialogs, {peer = p})
   end
   return true, callback(extra, true, dialogs)
 end
 
-local function _load(message, callback, extra)
+local function _load(thumb, message, callback, extra)
   local callback = callback or ok_cb
   local res = {}
   if message.inputPeer._ == "peerChannel" then
@@ -585,11 +574,10 @@ local function _load(message, callback, extra)
   end
   if msg.media then
     local dw
-    if msg.media.photo then
+    if msg.media.photo and not thumb then
       dw = download_to_dir(msg.media.photo, 'download')
     elseif msg.media.document then
-      vardump(msg.media)
-      dw = download_to_dir(msg.media.document, 'download')
+      dw = download_to_dir(thumb and msg.media.document.thumb or msg.media, 'download')
     else
       return false, callback(extra, false, false)
     end
@@ -604,5 +592,201 @@ local function _load(message, callback, extra)
 end
 
 function load_file(...)
-  return _load(...)
+  return _load(false, ...)
+end
+
+function load_photo(...)
+  return _load(false, ...)
+end
+
+function load_video(...)
+  return _load(false, ...)
+end
+
+function load_audio(...)
+  return _load(false, ...)
+end
+
+function load_document(...)
+  return _load(false, ...)
+end
+
+
+function load_video_thumb(...)
+  return _load(true, ...)
+end
+
+function load_document_thumb(...)
+  return _load(true, ...)
+end
+
+function send_contact(peer, phone, first_name, last_name, callback, extra)
+  local callback = callback or ok_cb
+  if not phone or not first_name then
+    return false, callback(extra, false, false)
+  end
+  local media = {_ = 'inputMediaContact', phone_number = phone, first_name = first_name, last_name = last_name or ''}
+  local res = messages.sendMedia({peer = peer, media = media})
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, tgmsg(res.updates[1].message))
+  end
+  return false, callback(extra, false, false)
+end
+
+function add_contact(phone, first_name, last_name, callback, extra)
+  local callback = callback or ok_cb
+  local c = {}
+  c[0] = {_='inputPhoneContact', phone_number = phone, first_name = first_name, last_name = last_name or ''}
+  local res = contacts.importContacts({contacts = c})
+  if res then
+    if res.error or res == {} then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, false, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function send_location(peer, lat, long, callback, extra)
+  local callback = callback or ok_cb
+  local res = messages.sendMedia({peer = peer, media = {_ = 'inputMediaGeoPoint', geo_point = {_ = 'inputGeoPoint', lat = lat, long = long}}})
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, false, tgmsg(res.updates[1].message))
+  end
+  return false, callback(extra, false, false)
+end
+
+function channel_list(callback, extra)
+  local callback = callback or ok_cb
+  local res = get_dialogs(true)
+  if not res or res == {} or res.error then
+    return false, callback(extra, false, res)
+  end
+  local dialogs = {}
+  for _, v in pairs(res) do
+    if v._ == 'peerChannel' then
+      table.insert(dialogs, packInfo(fixfp(get_full_info(v))))
+    end
+  end
+  return true, callback(extra, true, dialogs)
+end
+
+function get_contact_list(callback, extra)
+  local callback = callback or ok_cb
+  local res = contacts.getContacts({hash = 0})
+  if res then
+    if res.error or res == {} then
+      return false, callback(extra, false, res)
+    end
+    local contacts = {}
+    for _, v in pairs(res.contacts) do
+      local info = packInfo(fixfp(get_full_info(v.user_id)))
+      table.insert(contacts, info)
+    end
+    return true, callback(extra, true, contacts)
+  end
+  return false, callback(extra, false, false)
+end
+
+function msg_search(peer, pattern, callback, extra)
+  local callback = callback or ok_cb
+  local res = messages.search(
+    {
+      peer = peer,
+      q = pattern,
+      filter = {
+        _ = "inputMessagesFilterEmpty"
+      },
+      min_date = 0,
+      max_date = 0,
+      offset_id = 0,
+      add_offset = 0,
+      limit = 40,
+      max_id = 0,
+      min_id = 0
+    }
+  )
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    local msgs = {}
+    for _, v in pairs(res.messages) do
+      table.insert(msgs, tgmsg(v))
+    end
+    return true, callback(extra, true, msgs)
+  end
+  return false, callback(extra, false, false)
+end
+
+function msg_global_search(pattern, callback, extra)
+  local callback = callback or ok_cb
+  local res = messages.searchGlobal(
+    {
+      q = pattern,
+      offset_date = 0,
+      offset_peer = {
+        _ = "inputPeerEmpty"
+      },
+      offset_id = 0,
+      limit = 40,
+    }
+  )
+  if res then
+    if res == {} or res.error then
+      return false, callback(extra, false, res)
+    end
+    local msgs = {}
+    for _, v in pairs(res.messages) do
+      table.insert(msgs, tgmsg(v))
+    end
+    return true, callback(extra, true, msgs)
+  end
+  return false, callback(extra, false, false)
+end
+
+function create_channel(title, about, callback, extra)
+  local callback = callback or ok_cb
+  
+end
+
+function rename_channel()
+  local callback = callback or ok_cb
+
+end
+
+function channel_set_photo()
+  local callback = callback or ok_cb
+
+end
+
+function channel_set_about()
+  local callback = callback or ok_cb
+
+end
+
+function channel_set_username()
+  local callback = callback or ok_cb
+
+end
+
+function channel_set_mod()
+  local callback = callback or ok_cb
+
+end
+
+function channel_set_admin()
+  local callback = callback or ok_cb
+
+end
+
+function channel_demote()
+  local callback = callback or ok_cb
+
 end
