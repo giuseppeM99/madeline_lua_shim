@@ -3,7 +3,7 @@ function (..., callback, extra)
   local callback = callback or ok_cb
   local res = madeline.method(...)
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -12,23 +12,9 @@ function (..., callback, extra)
 end
 ]]
 --[[ TODO
-  CHANNELS
-    create_channel
-    rename_channel
-    channel_set_photo
-    channel_set_about
-    channel_set_username
-    channel_set_admin
-    channel_set_mod
-    channel_demote
   DIALOGS & CONTACTS
-    add_contact
     del_contact
     rename_contact
-  PROFILE
-    set_profile_photo
-    set_profile_name
-    set_profile_username
 --]]
 local function ok_cb(a, b, c)
 end
@@ -43,7 +29,7 @@ function resolve_username(username, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(get_full_info(username))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, packInfo(res, {}))
@@ -55,7 +41,7 @@ function user_info(input, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(get_full_info(input))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     local rr = {}
@@ -72,7 +58,7 @@ function chat_info(input, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(get_full_info(input))
   if res then
-    if res == {} or res.error or not res.type == "chat" then
+    if type(res) == 'table' and res.error or not res.type == "chat" then
       return false, callback(extra, false, res)
     end
     local rres = packInfo(res, {})
@@ -98,7 +84,7 @@ function channel_info(input, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(get_full_info(input))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     res = packInfo(res, {})
@@ -113,7 +99,7 @@ end
 local function _channel_get_users(channel, filter)
 
   local res = fixfp(get_pwr_chat(channel))
-  if not res or res == {} or res.error then
+  if not res or type(res) == 'table' and res.error then
     return false, res
   end
   if res.type ~= "channel" and res.type ~= "supergroup" then
@@ -149,7 +135,7 @@ function create_group_chat(user, title, callback, extra)
   local callback = callback or ok_cb
   local res = messages.createChat({users = {user}, title = title})
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -161,7 +147,7 @@ function rename_chat(chat, name, callback, extra)
   local callback = callback or ok_cb
   local res = messages.editChatTitle({chat_id = chat, title = name})
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -185,7 +171,7 @@ function chat_upgrade(chat, callback, extra)
   local callback = callback or ok_cb
   local res = messages.migrateChat({chat_id = chat})
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -197,7 +183,7 @@ function import_chat_link(hash, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(messages.importChatInvite({hash = hash}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -209,7 +195,7 @@ function export_chat_link(chat, callback, extra)
   local callback = callback or ok_cb
   local res = chat:match("chat#i?d?") and fixfp(messages.exportChatInvite({chat_id = chat})) or fixfp(channels.exportInvite({channel = chat}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res.link)
@@ -221,7 +207,7 @@ function check_chat_link(hash, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(messages.checkChatInvite({hash = hash}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -233,7 +219,7 @@ function channel_leave(channel, callback, extra)
   local callback = callback or ok_cb
   local res = channels.leaveChannel({channel = channel})
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -249,7 +235,7 @@ function channel_join(channel, callback, extra)
   local callback = callback or ok_cb
   local res = channels.joinChannel({channel = channel})
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -266,7 +252,7 @@ function delete_msg(message, callback, extra)
     res = fixfp(messages.deleteMessages({revoke = true, id = {message.id}})) -- so this method does not exist? https://daniil.it/MadelineProto/API_docs/methods/messages_deleteMessages.html
   end
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -278,7 +264,7 @@ function send_msg(peer, text, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(messages.sendMessage({peer = peer, message = text}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, tgmsg(res.updates[1].message))
@@ -345,7 +331,7 @@ function send_document(peer, file_path, callback, extra)
   local inputMedia = {_ = "inputMediaUploadedDocument", file = inputFile, attributes = documentAttribute, caption = "", mime_type = mime_type}
   local res = fixfp(messages.sendMedia({peer = peer, media = inputMedia}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, tgmsg(res.updates[1].message))
@@ -367,7 +353,7 @@ function send_video(peer, file_path, callback, extra)
   local inputMedia = {_ = "inputMediaUploadedDocument", file = inputFile, attributes = documentAttribute, caption = "", mime_type = getMimeType(file_path)}
   local res = fixfp(messages.sendMedia({peer = peer, media = inputMedia}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, tgmsg(res.updates[1].message))
@@ -381,7 +367,7 @@ function send_photo(peer, file_path, callback, extra)
   local inputMedia = {_ = "inputMediaUploadedPhoto", file = inputFile, caption = ""}
   local res = fixfp(messages.sendMedia({peer = peer, media = inputMedia}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, tgmsg(res.updates[1].message))
@@ -418,7 +404,7 @@ function chat_del_user(chat, user, callback, extra)
   end
   local res = fixfp(messages.deleteChatUser({chat_id = chat, user_id = user}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -431,7 +417,7 @@ function channel_kick(channel, user, callback, extra)
   local channelBannedRights = {_ = 'channelBannedRights', view_messages = true, send_messages = true, send_media = true, send_stickers = true, send_gifs = true, send_games = true, send_inline = true, embed_links = true, until_date = 0}
   local res = fixfp(channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -444,7 +430,7 @@ function channel_unblock(channel, user, callback, extra)
   local channelBannedRights = {_ = 'channelBannedRights', view_messages = false, send_messages = false, send_media = false, send_stickers = false, send_gifs = false, send_games = false, send_inline = false, embed_links = false, until_date = 0}
   local res = channels.editBanned({channel = channel, user_id = user, banned_rights = channelBannedRights})
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -461,7 +447,7 @@ function get_message(message, callback, extra)
     res = fixfp(messages.getMessages({id = {message.id}}))
   end
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     if res.messages[0] then
@@ -482,7 +468,7 @@ function fwd_media(message, destination, callback, extra) --Doesn't works yet, i
     res = fixfp(messages.getMessages({id = {message.id}}))
   end
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     local fwdMessage = res.messages[0] or false
@@ -492,14 +478,14 @@ function fwd_media(message, destination, callback, extra) --Doesn't works yet, i
     if fwdMessage.media then
       if fwdMessage.media._ == "messageMediaPhoto" then
         local res = messages.sendMedia({peer = destination, media = {_ = "inputMediaPhoto", caption = fwdMessage.media.caption or '', id = {_ = "inputPhoto", id = fwdMessage.media.photo.id, access_hash = fwdMessage.media.photo.access_hash}}})
-        if res and not res == {} and not res.error then
+        if res and not type(res) == 'table' and not res.error then
           return true, callback(extra, true, res)
         else
           return false, callback(extra, false, res)
         end
       elseif fwdMessage.media._ == "messageMediaDocument" then
         local res = fixfp(messages.sendMedia({peer = destination, media = {_ = "inputMediaDocument", caption = fwdMessage.media.caption or '', id = {_ = "inputPhoto", id = fwdMessage.media.document.id, access_hash = fwdMessage.media.document.access_hash}}}))
-        if res and not res == {} and not res.error then
+        if res and not type(res) == 'table' and not res.error then
           return true, callback(extra, true, tgmsg(res.updates[1].message))
         else
           return false, callback(extra, false, res)
@@ -514,7 +500,7 @@ function fwd_msg(message, destination, callback, extra)
   local callback = callback or ok_cb
   local res = fixfp(messages.forwardMessages({from_peer = message.inputPeer, to_peer = destination, id = {message.id}}))
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, tgmsg(res.updates[1].message))
@@ -532,7 +518,7 @@ function mark_read(peer, callback, extra)
     res = messages.readHistory({peer = peer.InputPeer, max_id = 0})
   end
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, res)
@@ -543,7 +529,7 @@ end
 function get_dialog_list(callback, extra)
   local callback = callback or ok_cb
   local res = get_dialogs()
-  if not res or res == {} or res.error then
+  if not res or type(res) == 'table' and res.error then
     return false, callback(extra, false, res)
   end
   local dialogs = {}
@@ -564,7 +550,7 @@ local function _load(thumb, message, callback, extra)
   end
   local msg
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     msg = res.messages[0] or false
@@ -628,7 +614,7 @@ function send_contact(peer, phone, first_name, last_name, callback, extra)
   local media = {_ = 'inputMediaContact', phone_number = phone, first_name = first_name, last_name = last_name or ''}
   local res = messages.sendMedia({peer = peer, media = media})
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     return true, callback(extra, true, tgmsg(res.updates[1].message))
@@ -639,13 +625,13 @@ end
 function add_contact(phone, first_name, last_name, callback, extra)
   local callback = callback or ok_cb
   local c = {}
-  c[0] = {_='inputPhoneContact', phone_number = phone, first_name = first_name, last_name = last_name or ''}
+  c[0] = {_ = 'inputPhoneContact', phone_number = phone, first_name = first_name, last_name = last_name or ''}
   local res = contacts.importContacts({contacts = c})
   if res then
-    if res.error or res == {} then
+    if res.error or type(res) == 'table' then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, false, res)
+    return true, callback(extra, true, res)
   end
   return false, callback(extra, false, false)
 end
@@ -654,10 +640,10 @@ function send_location(peer, lat, long, callback, extra)
   local callback = callback or ok_cb
   local res = messages.sendMedia({peer = peer, media = {_ = 'inputMediaGeoPoint', geo_point = {_ = 'inputGeoPoint', lat = lat, long = long}}})
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, false, tgmsg(res.updates[1].message))
+    return true, callback(extra, true, tgmsg(res.updates[1].message))
   end
   return false, callback(extra, false, false)
 end
@@ -665,13 +651,13 @@ end
 function channel_list(callback, extra)
   local callback = callback or ok_cb
   local res = get_dialogs(true)
-  if not res or res == {} or res.error then
+  if not res or type(res) == 'table' and res.error then
     return false, callback(extra, false, res)
   end
   local dialogs = {}
   for _, v in pairs(res) do
     if v._ == 'peerChannel' then
-      table.insert(dialogs, packInfo(fixfp(get_full_info(v))))
+      table.insert(dialogs, packInfo(fixfp(get_info(v))))
     end
   end
   return true, callback(extra, true, dialogs)
@@ -681,12 +667,12 @@ function get_contact_list(callback, extra)
   local callback = callback or ok_cb
   local res = contacts.getContacts({hash = 0})
   if res then
-    if res.error or res == {} then
+    if res.error or type(res) == 'table' then
       return false, callback(extra, false, res)
     end
     local contacts = {}
     for _, v in pairs(res.contacts) do
-      local info = packInfo(fixfp(get_full_info(v.user_id)))
+      local info = packInfo(fixfp(get_info(v.user_id)))
       table.insert(contacts, info)
     end
     return true, callback(extra, true, contacts)
@@ -713,7 +699,7 @@ function msg_search(peer, pattern, callback, extra)
     }
   )
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     local msgs = {}
@@ -739,7 +725,7 @@ function msg_global_search(pattern, callback, extra)
     }
   )
   if res then
-    if res == {} or res.error then
+    if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
     local msgs = {}
@@ -751,42 +737,220 @@ function msg_global_search(pattern, callback, extra)
   return false, callback(extra, false, false)
 end
 
-function create_channel(title, about, callback, extra)
+function channel_invite(channel, user, callback, extra)
   local callback = callback or ok_cb
-  
+  local res = fixfp(channels.inviteToChannel({channel = channel, users = {user}}))
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, pachInfo(get_full_info(res)))
+  end
+  return false, callback(extra, false, false)
 end
 
-function rename_channel()
+function chat_add_user(chat, user, callback, extra)
   local callback = callback or ok_cb
-
+  local res = fixfp(messages.addChatUser({chat_id = chat, user_id = user, fwd_limit = 0}))
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
 end
 
-function channel_set_photo()
+function create_supergroup(user, title, about, callback, extra)
   local callback = callback or ok_cb
-
+  local res = channels.createChannel({broadcast = true, megagroup = true, title = title, about = about})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return channel_invite(res.chats[0], user, callback, extra)
+  end
+  return false, callback(extra, false, false)
 end
 
-function channel_set_about()
+function create_channel(user, title, about, callback, extra)
   local callback = callback or ok_cb
-
+  local res = channels.createChannel({broadcast = true, megagroup = false, title = title, about = about})
+  if res then
+    if res.error or type(res) == 'table' then
+      return false, callback(extra, false, res)
+    end
+    return channel_invite(res.chats[0], user, callback, extra)
+  end
+  return false, callback(extra, false, false)
 end
 
-function channel_set_username()
+function rename_channel(channel, title, callback, extra)
   local callback = callback or ok_cb
-
+  local res = channels.editTitle({channel = channel, title = title})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
 end
 
-function channel_set_mod()
+function channel_set_photo(channel, photo, callback, extra)
   local callback = callback or ok_cb
-
+  local inputFile = upload(photo)
+  if inputFile then
+    local res = channels.editPhoto({channel = channel, photo = {_ = 'inputChatUploadedPhoto', file = inputFile}})
+    if res then
+      if type(res) == 'table' and res.error then
+        return false, callback(extra, false, res)
+      end
+      return true, callback(extra, true, res)
+    end
+    return false, callback(extra, false, false)
+  end
+  return false, callback(extra, false, false)
 end
 
-function channel_set_admin()
+function channel_set_about(channel, about, callback, extra) -- fuck you gimme sum errors pls pls pls
   local callback = callback or ok_cb
-
+  local res = channels.editAbout({channel = channel, about = about})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
 end
 
-function channel_demote()
+function channel_set_username(channel, username, callback, extra)
   local callback = callback or ok_cb
+  local res = channels.updateUsername({channel = channel, username = username})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, true)
+  end
+  return false, callback(extra, false, false)
+end
 
+function channel_set_mod(channel, user, callback, extra)
+  local callback = callback or ok_cb
+  return channel_set_admin(channel, user, callback, extra)
+end
+
+function channel_set_admin(channel, user, callback, extra)
+  local callback = callback or ok_cb
+  local res = channels.editAdmin({channel = channel, user_id = user, admin_rights = {
+    _ = 'channelAdminRights',
+    change_info = true,
+    post_messages = true,
+    edit_messages = false,
+    delete_messages = false,
+    ban_users = true,
+    invite_users = true,
+    invite_link = true,
+    pin_messages = true,
+    add_admins = false
+  }})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function channel_demote(channel, user, callback, extra)
+  local callback = callback or ok_cb
+  local res = channels.editAdmin({channel = channel, user_id = user, admin_rights = {
+    _ = 'channelAdminRights',
+    change_info = false,
+    post_messages = false,
+    edit_messages = false,
+    delete_messages = false,
+    ban_users = false,
+    invite_users = false,
+    invite_link = false,
+    pin_messages = false,
+    add_admins = false
+  }})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function delete_channel(channel, callback, extra)
+  local callback = callback or ok_cb
+  local res = channels.deleteChannel({channel = channel})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
+end
+
+function channel_delete(...)
+  return delete_channel(...)
+end
+
+function set_profile_name(first_name, last_name, callback, extra)
+  local callback = callback or ok_cb
+  local res = account.updateProfile({first_name = first_name, last_name = last_name})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, packInfo(get_info(res)))
+  end
+  return false, callback(extra, false, res)
+end
+
+function set_profile_username(username, callback, extra)
+  local callback = callback or ok_cb
+  local res = account.updateUsername({username = username})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, packInfo(get_info(res)))
+  end
+  return false, callback(extra, false, res)
+end
+
+function set_profile_photo(photo, callback, extra)
+  local callback = callback or ok_cb
+  local inputFile = upload(photo)
+  if not inputFile then return false, callback(extra, false, false) end
+  local photo = photos.uploadProfilePhoto({file = inputFile})
+  local res = photos.updateProfilePhoto({id = {_ = 'inputPhoto', id = photo.photo.id, access_hash = photo.photo.access_hash}})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, res)
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, res)
+end
+
+function set_profile_about(about, callback, extra)
+  local callback = callback or ok_cb
+  local res = account.updateProfile({about = about})
+  if res then
+    if type(res) == 'table' and res.error then
+      return false, callback(extra, false, packInfo(get_info(res)))
+    end
+    return true, callback(extra, true, res)
+  end
+  return false, callback(extra, false, false)
 end
