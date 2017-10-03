@@ -3,3 +3,4 @@ token.php
 *.madeline
 *.madeline.lock
 vendor/*
+download/*

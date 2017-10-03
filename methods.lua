@@ -97,7 +97,6 @@ function channel_info(input, callback, extra)
 end
 
 local function _channel_get_users(channel, filter)
-
   local res = fixfp(get_pwr_chat(channel))
   if not res or type(res) == 'table' and res.error then
     return false, res
@@ -119,15 +118,21 @@ function channel_get_members(input, callback, extra)
   return channel_get_users(input, callback, extra)
 end
 
+function channel_get_admins(input, callback, extra)
+  local callback = callback or ok_cb
+  local success, result = _channel_get_users(input, 2)
+  return success, callback(extra, success, result)
+end
+
 function channel_get_bots(input, callback, extra)
   local callback = callback or ok_cb
   local success, result = _channel_get_users(input, 3)
   return success, callback(extra, success, result)
 end
 
-function channel_get_admins(input, callback, extra)
+function channel_get_kicked(input, callback, extra)
   local callback = callback or ok_cb
-  local success, result = _channel_get_users(input, 2)
+  local success, result = _channel_get_users(input, 4)
   return success, callback(extra, success, result)
 end
 

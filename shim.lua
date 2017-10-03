@@ -200,12 +200,17 @@ function parsePwrUser(user, pack)
   if user.type == "user" or user.type == "bot" then
     pack.peer_type = "user"
     pack.peer_id = user.id
+    pack.id = "placeholder"
     pack.first_name = user.first_name
     pack.last_name = user.last_name
     pack.username = user.username
     pack.bot = user.type == "bot"
     pack.print_name = pack.last_name and (pack.first_name .. "_".. pack.last_name):gsub("%s", "_") or pack.first_name:gsub("%s", "_")
+    pack.access_hash = info.access_hash
+    pack.flags = 1
+    pack.phone = info.phone
     pack.about = user.about --Bio
+    pack.raw = user
   end
   return pack
 end
@@ -218,16 +223,24 @@ function packMembers(memberlist, users, filter)
   for _, v in pairs(memberlist.participants) do
     v.user = parsePwrUser(v.user)
     v.user.role = v.role
-    if filter == 2 then
-      if not v.role or v.role ~= "user" then --The method get_pwr_chat returns no role if the user is admin ATM
+    if filter == 1 then
+      if v.role ~= "banned" then
+        table.insert(users, v.user)
+      end
+    elseif filter == 2 then
+      if v.role == "admin" or v.role == "creator" then --The method get_pwr_chat returns no role if the user is admin ATM
+        v.admin = true
+        v.creator = v.role == "creator"
         table.insert(users, v.user)
       end
     elseif filter == 3 then
       if v.user.bot then
         table.insert(users, v.user)
       end
-    else
-      table.insert(users, v.user)
+    elseif filter == 4 then
+      if v.role == "banned" then
+        table.insert(users, v.user)
+      end
     end
   end
 
