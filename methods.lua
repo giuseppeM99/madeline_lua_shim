@@ -272,7 +272,7 @@ function send_msg(peer, text, callback, extra)
     if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, tgmsg(res.updates[1].message))
+    return true, callback(extra, true, res and res.updates and res.updates[1] and tgmsg(res.updates[1].message))
   end
   return false, callback(extra, false, false)
 end
@@ -339,8 +339,7 @@ function send_document(peer, file_path, callback, extra)
     if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, tgmsg(res.updates[1].message))
-  end
+    return true, callback(extra, true, res.updates and tgmsg(res.updates[1].message) or res)  end
   return false, callback(extra, false, false)
 end
 
@@ -361,8 +360,7 @@ function send_video(peer, file_path, callback, extra)
     if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, tgmsg(res.updates[1].message))
-  end
+    return true, callback(extra, true, res.updates and tgmsg(res.updates[1].message) or res)  end
   return false, callback(extra, false, false)
 end
 
@@ -375,8 +373,7 @@ function send_photo(peer, file_path, callback, extra)
     if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, tgmsg(res.updates[1].message))
-  end
+    return true, callback(extra, true, res.updates and tgmsg(res.updates[1].message) or res)  end
   return false, callback(extra, false, false)
 end
 
@@ -491,8 +488,7 @@ function fwd_media(message, destination, callback, extra) --Doesn't works yet, i
       elseif fwdMessage.media._ == "messageMediaDocument" then
         local res = fixfp(messages.sendMedia({peer = destination, media = {_ = "inputMediaDocument", caption = fwdMessage.media.caption or '', id = {_ = "inputPhoto", id = fwdMessage.media.document.id, access_hash = fwdMessage.media.document.access_hash}}}))
         if res and not type(res) == 'table' and not res.error then
-          return true, callback(extra, true, tgmsg(res.updates[1].message))
-        else
+          return true, callback(extra, true, res.updates and tgmsg(res.updates[1].message) or res)        else
           return false, callback(extra, false, res)
         end
       end
@@ -508,8 +504,7 @@ function fwd_msg(message, destination, callback, extra)
     if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, tgmsg(res.updates[1].message))
-  end
+    return true, callback(extra, true, res.updates and tgmsg(res.updates[1].message) or res)  end
   return false, callback(extra, false, false)
 end
 
@@ -616,14 +611,13 @@ function send_contact(peer, phone, first_name, last_name, callback, extra)
   if not phone or not first_name then
     return false, callback(extra, false, false)
   end
-  local media = {_ = 'inputMediaContact', phone_number = phone, first_name = first_name, last_name = last_name or ''}
+  local media = {_ = 'inputMediaContact', phone_number = tostring(phone), first_name = first_name, last_name = last_name or ''}
   local res = messages.sendMedia({peer = peer, media = media})
   if res then
     if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, tgmsg(res.updates[1].message))
-  end
+    return true, callback(extra, true, res.updates and tgmsg(res.updates[1].message) or res)  end
   return false, callback(extra, false, false)
 end
 
@@ -648,8 +642,7 @@ function send_location(peer, lat, long, callback, extra)
     if type(res) == 'table' and res.error then
       return false, callback(extra, false, res)
     end
-    return true, callback(extra, true, tgmsg(res.updates[1].message))
-  end
+    return true, callback(extra, true, res.updates and tgmsg(res.updates[1].message) or res)  end
   return false, callback(extra, false, false)
 end
 

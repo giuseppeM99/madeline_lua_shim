@@ -19,6 +19,7 @@ methodsPath = "methods.lua"
 
 function loadBot()
   started = false
+  package.loaded = nil
   crons = {}
   print("Loading the bot...")
   loadfile("shim.lua")()

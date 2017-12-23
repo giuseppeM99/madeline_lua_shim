@@ -16,18 +16,10 @@ require 'vendor/autoload.php';
 $Lua = false;
 
 try {
-    $Lua = new \danog\MadelineProto\Lua('start.lua', \danog\MadelineProto\Serialization::deserialize('bot.madeline'));
+    $Lua = new \danog\MadelineProto\Lua('start.lua', new \danog\MadelineProto\API('bot.madeline'));
 } catch (\danog\MadelineProto\Exception $e) {
     die($e->getMessage().PHP_EOL);
 }
-
-function ser()
-{
-    global $Lua;
-    $Lua->MadelineProto->serialize('bot.madeline');
-}
-
-$Lua->registerCallback('serialize', 'ser');
 
 if (!file_exists('download')) {
     mkdir('download');
@@ -35,7 +27,6 @@ if (!file_exists('download')) {
 
 $Lua->madeline_update_callback(['_' => 'init']);
 $offset = 0;
-$lastSer = time();
 while (true) {
     $updates = $Lua->MadelineProto->API->get_updates(['offset' => $offset, 'limit' => 50, 'timeout' => 0]);
     foreach ($updates as $update) {
@@ -45,8 +36,7 @@ while (true) {
     }
 
     $Lua->doCrons();
-    if (time()-60 >= $lastSer) {
-        ser();
-        $lastSer = time();
+    if (time()-60 >= $Lua->MadelineProto->API->serialized) {
+        $Lua->MadelineProto->serialize();
     }
 }
